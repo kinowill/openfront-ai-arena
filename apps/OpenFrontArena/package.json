@@ -1,0 +1,11 @@
+{
+  "name": "openfront-arena",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check:harness": "..\\OpenFrontIO\\node_modules\\.bin\\tsx src\\harness\\runLocalHarness.ts",
+    "harness:local": "..\\OpenFrontIO\\node_modules\\.bin\\tsx src\\harness\\runLocalHarness.ts",
+    "harness:live": "..\\OpenFrontIO\\node_modules\\.bin\\tsx src\\harness\\runLiveHarness.ts",
+    "control-room:start": "..\\OpenFrontIO\\node_modules\\.bin\\tsx src\\control-room\\runControlRoom.ts"
+  }
+}

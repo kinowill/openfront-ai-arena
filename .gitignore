@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+.DS_Store
+Thumbs.db
+.env
+.env.*
+.idea/
+.vscode/
+*.log
+logs/
+apps/OpenFrontArena/logs/
+apps/OpenFrontArena/node_modules/
+apps/OpenFrontArena/dist/
+apps/OpenFrontIO/

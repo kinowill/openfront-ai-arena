@@ -1,0 +1,7 @@
+{
+  "repo": "https://github.com/openfrontio/OpenFrontIO.git",
+  "commit": "217a2c454846e8e2c311683f146e3d5c5b735d8f",
+  "patches": [
+    "patches/openfrontio/0001-local-dev-control-room.patch"
+  ]
+}

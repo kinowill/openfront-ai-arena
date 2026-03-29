@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "resources/*": [
+        "../OpenFrontIO/resources/*"
+      ]
+    },
+    "strict": false,
+    "strictNullChecks": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "allowUnusedLabels": false,
+    "alwaysStrict": true,
+    "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "useDefineForClassFields": false,
+    "noEmit": true,
+    "types": ["node"],
+    "typeRoots": [
+      "../OpenFrontIO/node_modules/@types"
+    ]
+  },
+  "include": [
+    "src/**/*",
+    "../OpenFrontIO/src/client/vite-env.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "docs"
+  ]
+}

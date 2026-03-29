@@ -1,0 +1,312 @@
+﻿diff --git a/src/client/Auth.ts b/src/client/Auth.ts
+index be089914..343865c9 100644
+--- a/src/client/Auth.ts
++++ b/src/client/Auth.ts
+@@ -81,7 +81,12 @@ export async function userAuth(
+     const jwt = __jwt;
+     if (!jwt) {
+       if (!shouldRefresh) {
+-        console.warn("No JWT found and shouldRefresh is false");
++        const isLocalDev =
++          window.location.hostname === "localhost" ||
++          window.location.hostname === "127.0.0.1";
++        if (!isLocalDev) {
++          console.warn("No JWT found and shouldRefresh is false");
++        }
+         return false;
+       }
+       console.log("No JWT found");
+diff --git a/src/client/GutterAds.ts b/src/client/GutterAds.ts
+index f887fd26..a2911b67 100644
+--- a/src/client/GutterAds.ts
++++ b/src/client/GutterAds.ts
+@@ -2,6 +2,13 @@ import { LitElement, css, html } from "lit";
+ import { customElement, state } from "lit/decorators.js";
+ import { FOOTER_AD_MIN_HEIGHT } from "./components/HomeFooterAd";
+ 
++function isLocalDevClient(): boolean {
++  return (
++    window.location.hostname === "localhost" ||
++    window.location.hostname === "127.0.0.1"
++  );
++}
++
+ @customElement("gutter-ads")
+ export class GutterAds extends LitElement {
+   @state()
+@@ -77,12 +84,16 @@ export class GutterAds extends LitElement {
+     const rightContainer = this.querySelector(`#${this.rightContainerId}`);
+ 
+     if (!leftContainer || !rightContainer) {
+-      console.warn("Ad containers not found in DOM");
++      if (!isLocalDevClient()) {
++        console.warn("Ad containers not found in DOM");
++      }
+       return;
+     }
+ 
+     if (!window.ramp) {
+-      console.warn("Playwire RAMP not available");
++      if (!isLocalDevClient()) {
++        console.warn("Playwire RAMP not available");
++      }
+       return;
+     }
+ 
+diff --git a/src/client/Main.ts b/src/client/Main.ts
+index 667fd6e4..1ca5f194 100644
+--- a/src/client/Main.ts
++++ b/src/client/Main.ts
+@@ -74,6 +74,21 @@ import "./styles/layout/container.css";
+ import "./styles/layout/header.css";
+ import "./styles/modal/chat.css";
+ 
++function isLocalDevClient(): boolean {
++  return (
++    window.location.hostname === "localhost" ||
++    window.location.hostname === "127.0.0.1"
++  );
++}
++
++function warnOptionalUi(message: string): void {
++  if (isLocalDevClient()) {
++    console.info(message);
++    return;
++  }
++  console.warn(message);
++}
++
+ function updateAccountNavButton(userMeResponse: UserMeResponse | false) {
+   const button = document.getElementById("nav-account-button");
+   if (!button) return;
+@@ -252,7 +267,7 @@ class Client {
+   private tokenLoginModal: TokenLoginModal;
+   private matchmakingModal: MatchmakingModal;
+ 
+-  private gutterAds: GutterAds;
++  private gutterAds: GutterAds | null = null;
+   private turnstileTokenPromise: Promise<{
+     token: string;
+     createdAt: number;
+@@ -285,19 +300,19 @@ class Client {
+       "lang-selector",
+     ) as LangSelector;
+     if (!langSelector) {
+-      console.warn("Lang selector element not found");
++      warnOptionalUi("Lang selector element not found");
+     }
+ 
+     this.flagInput = document.querySelector("flag-input") as FlagInput;
+     if (!this.flagInput) {
+-      console.warn("Flag input element not found");
++      warnOptionalUi("Flag input element not found");
+     }
+ 
+     this.usernameInput = document.querySelector(
+       "username-input",
+     ) as UsernameInput;
+     if (!this.usernameInput) {
+-      console.warn("Username input element not found");
++      warnOptionalUi("Username input element not found");
+     }
+ 
+     this.gameModeSelector = document.querySelector(
+@@ -313,9 +328,12 @@ class Client {
+     });
+ 
+     const gutterAds = document.querySelector("gutter-ads");
+-    if (!(gutterAds instanceof GutterAds))
+-      throw new Error("Missing gutter-ads");
+-    this.gutterAds = gutterAds;
++    if (gutterAds instanceof GutterAds) {
++      this.gutterAds = gutterAds;
++    } else {
++      warnOptionalUi("gutter-ads not ready; continuing without sidebar ads");
++      this.gutterAds = null;
++    }
+ 
+     document.addEventListener("join-lobby", this.handleJoinLobby.bind(this));
+     document.addEventListener("leave-lobby", this.handleLeaveLobby.bind(this));
+@@ -331,11 +349,11 @@ class Client {
+ 
+     const hlpModal = document.querySelector("help-modal") as HelpModal;
+     if (!hlpModal || !(hlpModal instanceof HelpModal)) {
+-      console.warn("Help modal element not found");
++      warnOptionalUi("Help modal element not found");
+     }
+     const giModal = document.querySelector("game-info-modal") as GameInfoModal;
+     if (!giModal || !(giModal instanceof GameInfoModal)) {
+-      console.warn("Game info modal element not found");
++      warnOptionalUi("Game info modal element not found");
+     }
+     const helpButton = document.getElementById("help-button");
+     if (helpButton) {
+@@ -350,7 +368,7 @@ class Client {
+       "flag-input-modal",
+     ) as FlagInputModal;
+     if (!flagInputModal || !(flagInputModal instanceof FlagInputModal)) {
+-      console.warn("Flag input modal element not found");
++      warnOptionalUi("Flag input modal element not found");
+     }
+ 
+     // Attach listener to any flag-input component (desktop or potentially others)
+@@ -364,14 +382,14 @@ class Client {
+ 
+     this.storeModal = document.getElementById("page-item-store") as StoreModal;
+     if (!this.storeModal || !(this.storeModal instanceof StoreModal)) {
+-      console.warn("Store modal element not found");
++      warnOptionalUi("Store modal element not found");
+     }
+ 
+     const patternsModal = document.getElementById(
+       "territory-patterns-modal",
+     ) as TerritoryPatternsModal;
+     if (!patternsModal || !(patternsModal instanceof TerritoryPatternsModal)) {
+-      console.warn("Patterns modal element not found");
++      warnOptionalUi("Patterns modal element not found");
+     }
+ 
+     // Attach listener to any pattern-input component
+@@ -387,7 +405,7 @@ class Client {
+     }
+ 
+     if (!this.storeModal || !(this.storeModal instanceof StoreModal)) {
+-      console.warn("Store modal element not found");
++      warnOptionalUi("Store modal element not found");
+     }
+ 
+     // We no longer need to manually manage the preview button as PatternInput handles it component-side.
+@@ -411,7 +429,7 @@ class Client {
+       !this.tokenLoginModal ||
+       !(this.tokenLoginModal instanceof TokenLoginModal)
+     ) {
+-      console.warn("Token login modal element not found");
++      warnOptionalUi("Token login modal element not found");
+     }
+ 
+     this.matchmakingModal = document.querySelector(
+@@ -421,7 +439,7 @@ class Client {
+       !this.matchmakingModal ||
+       !(this.matchmakingModal instanceof MatchmakingModal)
+     ) {
+-      console.warn("Matchmaking modal element not found");
++      warnOptionalUi("Matchmaking modal element not found");
+     }
+ 
+     const onUserMe = async (userMeResponse: UserMeResponse | false) => {
+@@ -461,7 +479,7 @@ class Client {
+       "user-setting",
+     ) as UserSettingModal;
+     if (!settingsModal || !(settingsModal instanceof UserSettingModal)) {
+-      console.warn("User settings modal element not found");
++      warnOptionalUi("User settings modal element not found");
+     }
+     document
+       .getElementById("settings-button")
+@@ -475,7 +493,7 @@ class Client {
+       "host-lobby-modal",
+     ) as HostPrivateLobbyModal;
+     if (!this.hostModal || !(this.hostModal instanceof HostPrivateLobbyModal)) {
+-      console.warn("Host private lobby modal element not found");
++      warnOptionalUi("Host private lobby modal element not found");
+     } else {
+       this.hostModal.eventBus = this.eventBus;
+     }
+@@ -484,7 +502,7 @@ class Client {
+       "join-lobby-modal",
+     ) as JoinLobbyModal;
+     if (!this.joinModal || !(this.joinModal instanceof JoinLobbyModal)) {
+-      console.warn("Join lobby modal element not found");
++      warnOptionalUi("Join lobby modal element not found");
+     } else {
+       this.joinModal.eventBus = this.eventBus;
+     }
+diff --git a/src/client/graphics/AnimatedSpriteLoader.ts b/src/client/graphics/AnimatedSpriteLoader.ts
+index b3167808..d49220a2 100644
+--- a/src/client/graphics/AnimatedSpriteLoader.ts
++++ b/src/client/graphics/AnimatedSpriteLoader.ts
+@@ -1,15 +1,15 @@
+-import miniBigSmoke from "../../../resources/sprites/bigsmoke.png";
+-import buildingExplosion from "../../../resources/sprites/buildingExplosion.png";
+-import conquestSword from "../../../resources/sprites/conquestSword.png";
+-import dust from "../../../resources/sprites/dust.png";
+-import miniExplosion from "../../../resources/sprites/miniExplosion.png";
+-import miniFire from "../../../resources/sprites/minifire.png";
+-import nuke from "../../../resources/sprites/nukeExplosion.png";
+-import SAMExplosion from "../../../resources/sprites/samExplosion.png";
+-import sinkingShip from "../../../resources/sprites/sinkingShip.png";
+-import miniSmoke from "../../../resources/sprites/smoke.png";
+-import miniSmokeAndFire from "../../../resources/sprites/smokeAndFire.png";
+-import unitExplosion from "../../../resources/sprites/unitExplosion.png";
++import miniBigSmoke from "../../../resources/sprites/bigsmoke.png?url";
++import buildingExplosion from "../../../resources/sprites/buildingExplosion.png?url";
++import conquestSword from "../../../resources/sprites/conquestSword.png?url";
++import dust from "../../../resources/sprites/dust.png?url";
++import miniExplosion from "../../../resources/sprites/miniExplosion.png?url";
++import miniFire from "../../../resources/sprites/minifire.png?url";
++import nuke from "../../../resources/sprites/nukeExplosion.png?url";
++import SAMExplosion from "../../../resources/sprites/samExplosion.png?url";
++import sinkingShip from "../../../resources/sprites/sinkingShip.png?url";
++import miniSmoke from "../../../resources/sprites/smoke.png?url";
++import miniSmokeAndFire from "../../../resources/sprites/smokeAndFire.png?url";
++import unitExplosion from "../../../resources/sprites/unitExplosion.png?url";
+ import { Theme } from "../../core/configuration/Config";
+ import { PlayerView } from "../../core/game/GameView";
+ import { AnimatedSprite } from "./AnimatedSprite";
+diff --git a/src/server/MasterLobbyService.ts b/src/server/MasterLobbyService.ts
+index 9285b8a9..80b33100 100644
+--- a/src/server/MasterLobbyService.ts
++++ b/src/server/MasterLobbyService.ts
+@@ -74,6 +74,12 @@ export class MasterLobbyService {
+     );
+     if (this.readyWorkers.size === this.config.numWorkers() && !this.started) {
+       this.started = true;
++      if (this.config.jwtAudience() === "localhost") {
++        this.log.info(
++          "All workers ready, skipping public lobby scheduling in local dev mode",
++        );
++        return;
++      }
+       this.log.info("All workers ready, starting game scheduling");
+       startPolling(async () => this.broadcastLobbies(), 500);
+       startPolling(async () => await this.maybeScheduleLobby(), 1000);
+diff --git a/src/server/Worker.ts b/src/server/Worker.ts
+index 98e1aa3e..8c4df940 100644
+--- a/src/server/Worker.ts
++++ b/src/server/Worker.ts
+@@ -61,12 +61,16 @@ export async function startWorker() {
+   // Initialize lobby service (handles WebSocket upgrade routing)
+   const lobbyService = new WorkerLobbyService(server, wss, gm, log);
+ 
+-  setTimeout(
+-    () => {
+-      startMatchmakingPolling(gm);
+-    },
+-    1000 + Math.random() * 2000,
+-  );
++  if (config.jwtAudience() === "localhost") {
++    log.info("Skipping public matchmaking polling in local dev mode.");
++  } else {
++    setTimeout(
++      () => {
++        startMatchmakingPolling(gm);
++      },
++      1000 + Math.random() * 2000,
++    );
++  }
+ 
+   if (config.otelEnabled()) {
+     initWorkerMetrics(gm);
+@@ -78,7 +82,11 @@ export async function startWorker() {
+     config.apiKey(),
+     log,
+   );
+-  privilegeRefresher.start();
++  if (config.jwtAudience() === "localhost") {
++    log.info("Skipping privilege refresher in local dev mode.");
++  } else {
++    privilegeRefresher.start();
++  }
+ 
+   // Middleware to handle /wX path prefix
+   app.use((req, res, next) => {

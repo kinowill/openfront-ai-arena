@@ -1,0 +1,303 @@
+﻿<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenFront Bots Control Room</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-layout">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-logo"></div>
+          <div>
+            <h1 data-i18n="hero_title">OpenFront</h1>
+            <p class="eyebrow" data-i18n="eyebrow">Control Room</p>
+          </div>
+        </div>
+
+        <nav class="side-nav" aria-label="Navigation">
+          <button class="nav-item" data-target="setup-section" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <span data-i18n="nav_setup">Configuration</span>
+          </button>
+          <button class="nav-item" data-target="live-section" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-9 5 18 3-9h5"></path></svg>
+            <span data-i18n="nav_live">Match Live</span>
+          </button>
+          <button class="nav-item" data-target="openfront-section" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+            <span data-i18n="nav_surface">Vue OpenFront</span>
+          </button>
+          <button class="nav-item" data-target="operator-section" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <span data-i18n="nav_operator">Participer</span>
+          </button>
+          <button class="nav-item" data-target="analytics-section" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+            <span data-i18n="nav_analytics">Analyses</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="lang-toggle" aria-label="Language">
+            <button id="lang-fr" class="lang-button is-active" type="button">FR</button>
+            <button id="lang-en" class="lang-button" type="button">EN</button>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div class="topbar-left">
+            <div class="status-indicator">
+              <span id="status-pill" class="badge">Connexion...</span>
+              <span id="tick-pill" class="badge badge-outline">Tick --</span>
+            </div>
+          </div>
+          <div class="topbar-actions">
+            <button id="save-session" class="btn btn-secondary" type="button" data-i18n="button_save">Sauvegarder</button>
+            <button id="stop-session" class="btn btn-danger" type="button" data-i18n="button_stop">Arrêter</button>
+            <button id="start-session" class="btn btn-primary" type="button" data-i18n="button_start">Lancer la partie</button>
+          </div>
+        </header>
+
+        <div class="scroll-container">
+          <div class="content-wrapper">
+            
+            <section class="onboarding-banner panel">
+              <div class="panel-header">
+                <h2 data-i18n="guide_title">Flux de travail</h2>
+              </div>
+              <p class="text-muted text-sm mb-4" data-i18n="hero_subtitle">Configure une vraie partie, branche tes bots, suis le match en direct et ouvre un slot humain sans jongler entre dix outils.</p>
+              <ol class="guide-steps text-sm">
+                <li data-i18n="guide_step_1">1. Ajoute les slots utiles puis choisis leur backend.</li>
+                <li data-i18n="guide_step_2">2. Garde les options de partie normales, ou ajuste seulement ce qui t’intéresse.</li>
+                <li data-i18n="guide_step_3">3. Lance la session, surveille la vue live et ouvre OpenFront si besoin.</li>
+                <li data-i18n="guide_step_4">4. Si un slot humain est réservé, rejoins le lobby puis relance au moment voulu.</li>
+              </ol>
+            </section>
+
+            <div class="dashboard-grid">
+              
+              <div class="dashboard-col col-span-2">
+                <section id="setup-section" class="panel">
+                  <div class="panel-header flex-between">
+                    <div>
+                      <h2 id="orchestrator-title" data-i18n="setup_title">Configuration</h2>
+                      <p class="text-muted text-xs mt-1" data-i18n="setup_help">Paramètres globaux de la session.</p>
+                    </div>
+                    <span id="session-status" class="badge badge-warning">idle</span>
+                  </div>
+                  
+                  <form id="session-form" class="form-grid">
+                    <div class="form-group"><label data-i18n="field_map">Carte</label><select class="input" id="map-name-input" name="mapName"></select></div>
+                    <div class="form-group"><label data-i18n="field_mode">Mode</label><select class="input" id="game-mode-input" name="gameMode"><option value="ffa">FFA</option><option value="team">Team</option></select></div>
+                    <div class="form-group"><label data-i18n="field_delay">Délai (ms)</label><input class="input" id="tick-delay-input" name="tickDelayMs" type="number" min="50" max="5000" /></div>
+                    <div class="form-group"><label data-i18n="field_ticks">Ticks max</label><input class="input" id="max-ticks-input" name="maxTicks" type="number" min="1" max="5000" /></div>
+
+                    <div id="map-preview-card" class="map-preview-card col-span-full">
+                      <div class="map-preview-media">
+                        <img id="map-preview-image" class="map-preview-image hidden" alt="Map preview" />
+                        <div id="map-preview-random" class="map-preview-random hidden">?</div>
+                      </div>
+                      <div class="map-preview-copy">
+                        <div class="text-xs text-muted uppercase tracking-wide" data-i18n="map_preview_label">Apercu carte</div>
+                        <strong id="map-preview-title" class="map-preview-title">--</strong>
+                        <p id="map-preview-meta" class="text-sm text-muted mt-2">--</p>
+                      </div>
+                    </div>
+
+                    <div id="team-settings" class="team-settings col-span-full hidden">
+                      <div class="team-settings-header">
+                        <div>
+                          <div class="text-xs text-muted uppercase tracking-wide" data-i18n="team_setup_title">Equipes</div>
+                          <p id="team-settings-help" class="text-sm text-muted mt-2" data-i18n="team_setup_help">Choisis combien d'equipes colorees doivent exister. Chaque slot pourra ensuite viser une couleur precise ou rester en aleatoire.</p>
+                        </div>
+                        <div class="form-group team-count-field">
+                          <label data-i18n="field_team_count">Equipes</label>
+                          <select class="input input-compact" id="team-count-input" name="teamCount">
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div id="team-legend" class="team-legend mt-3"></div>
+                    </div>
+                    
+                    <div class="switches-group col-span-full">
+                      <label class="switch-control">
+                        <input id="infinite-gold-input" name="infiniteGold" type="checkbox" class="peer sr-only" />
+                        <div class="switch-bg"></div><span class="switch-label" data-i18n="field_infinite_gold">Or infini</span>
+                      </label>
+                      <label class="switch-control">
+                        <input id="infinite-troops-input" name="infiniteTroops" type="checkbox" class="peer sr-only" />
+                        <div class="switch-bg"></div><span class="switch-label" data-i18n="field_infinite_troops">Troupes infinies</span>
+                      </label>
+                      <label class="switch-control">
+                        <input id="instant-build-input" name="instantBuild" type="checkbox" class="peer sr-only" />
+                        <div class="switch-bg"></div><span class="switch-label" data-i18n="field_instant_build">Construction instantanée</span>
+                      </label>
+                    </div>
+                  </form>
+                  
+                  <hr class="divider">
+                  
+                  <div class="panel-header flex-between">
+                    <div>
+                      <h3 data-i18n="slots_title">Slots & Bots</h3>
+                      <p id="join-capability" class="text-muted text-xs mt-1"></p>
+                    </div>
+                    <div class="action-group">
+                      <button id="add-bot-slot" class="btn btn-outline btn-sm" type="button">+ <span data-i18n="add_bot">Bot</span></button>
+                      <button id="add-human-slot" class="btn btn-outline btn-sm" type="button">+ <span data-i18n="add_human">Humain</span></button>
+                    </div>
+                  </div>
+                  <div class="batch-controls">
+                    <label class="form-group batch-field" for="bot-batch-count">
+                      <span data-i18n="field_bot_batch">Bots en masse</span>
+                      <input class="input input-compact" id="bot-batch-count" type="number" min="2" max="8" value="4" />
+                    </label>
+                    <button id="add-bot-batch" class="btn btn-secondary btn-sm" type="button" data-i18n="button_add_bot_batch">Ajouter plusieurs bots</button>
+                  </div>
+                  <div class="batch-controls mt-3">
+                    <div id="native-bot-summary" class="text-xs text-muted"></div>
+                    <button id="remove-native-bots" class="btn btn-ghost btn-sm" type="button" data-i18n="button_remove_native_bots">Retirer</button>
+                    <button id="clear-native-bots" class="btn btn-ghost btn-sm" type="button" data-i18n="button_clear_native_bots">Tout retirer</button>
+                  </div>
+                  
+                  <div id="slot-editor" class="stack mt-4"></div>
+                  
+                  <div id="session-runtime" class="mt-4"></div>
+                </section>
+              </div>
+
+              <div class="dashboard-col col-span-1">
+                <section id="live-section" class="panel">
+                  <div class="panel-header flex-between">
+                    <h2 id="live-title" data-i18n="live_title">Vue du match</h2>
+                    <span id="match-id" class="badge badge-outline mono text-xs">no-match</span>
+                  </div>
+                  
+                  <div class="stats-grid mt-4">
+                    <div class="stat-box"><span class="stat-label" data-i18n="metric_map">Carte</span><strong id="map-name" class="stat-value">--</strong></div>
+                    <div class="stat-box"><span class="stat-label" data-i18n="metric_mode">Mode</span><strong id="match-mode" class="stat-value">--</strong></div>
+                    <div class="stat-box"><span class="stat-label" data-i18n="metric_players">Joueurs</span><strong id="player-count" class="stat-value">0</strong></div>
+                    <div class="stat-box"><span class="stat-label" data-i18n="metric_entries">Logs</span><strong id="entry-count" class="stat-value">0</strong></div>
+                  </div>
+                  
+                  <div class="map-container mt-4">
+                    <canvas id="live-map" width="320" height="320" aria-label="Carte live du match"></canvas>
+                    <div id="map-legend" class="legend mt-3"></div>
+                  </div>
+                  
+                  <button id="clear-logs" class="btn btn-ghost btn-sm w-full mt-4" type="button" data-i18n="button_clear_logs">Effacer les logs précédents</button>
+                </section>
+
+                <section id="operator-section" class="panel">
+                  <div class="panel-header">
+                    <h2 id="operator-title" data-i18n="operator_title">Opérateur Humain</h2>
+                  </div>
+                  <p class="text-muted text-sm mb-4" data-i18n="operator_help">Jouez les actions des slots humains réservés.</p>
+                  <div id="operator-panel" class="stack"></div>
+                </section>
+              </div>
+
+            </div> <div class="dashboard-grid mt-6">
+              
+              <div class="dashboard-col col-span-full">
+                <section id="openfront-section" class="panel">
+                  <div class="panel-header flex-between">
+                    <h2 id="surface-title" data-i18n="surface_title">Vue OpenFront</h2>
+                    <div class="action-group">
+                      <span id="surface-url-label" class="badge badge-outline mono text-xs">--</span>
+                      <button id="reload-surface" class="btn btn-outline btn-sm" type="button" data-i18n="surface_reload">Recharger</button>
+                      <button id="open-surface" class="btn btn-primary btn-sm" type="button" data-i18n="surface_open">Ouvrir</button>
+                    </div>
+                  </div>
+                  <div class="iframe-container mt-4">
+                    <div id="openfront-empty" class="empty-state">Aucune vue active.</div>
+                    <iframe id="openfront-frame" class="openfront-frame hidden" src="about:blank" title="OpenFront Live View"></iframe>
+                  </div>
+                </section>
+              </div>
+
+              <div class="dashboard-col col-span-2">
+                <section id="analytics-section" class="panel">
+                  <div class="panel-header">
+                    <h2 id="players-title" data-i18n="players_title">Joueurs et stats</h2>
+                  </div>
+                  <div class="table-responsive">
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th data-i18n="table_player">Joueur</th>
+                          <th data-i18n="table_tiles">Tuiles</th>
+                          <th data-i18n="table_troops">Troupes</th>
+                          <th data-i18n="table_gold">Or</th>
+                          <th data-i18n="table_reserve">Réserve</th>
+                          <th data-i18n="table_invalid">Invalide</th>
+                        </tr>
+                      </thead>
+                      <tbody id="players-table"></tbody>
+                    </table>
+                  </div>
+                </section>
+              </div>
+
+              <div class="dashboard-col col-span-1 stack">
+                <section class="panel">
+                  <div class="panel-header">
+                    <h2 id="decisions-title" data-i18n="decisions_title">Décisions récentes</h2>
+                  </div>
+                  <div id="decision-feed" class="feed mt-2"></div>
+                </section>
+                
+                <section class="panel">
+                  <div class="panel-header">
+                    <h2 id="fronts-title" data-i18n="fronts_title">Fronts</h2>
+                  </div>
+                  <div id="front-list" class="stack mt-2"></div>
+                </section>
+              </div>
+
+            </div> <div class="dashboard-grid mt-6 mb-8">
+              <div class="dashboard-col col-span-1">
+                <section class="panel h-full">
+                  <div class="panel-header">
+                    <h2 id="integrations-title" data-i18n="integrations_title">Connexions IA</h2>
+                  </div>
+                  <div id="integrations" class="stack mt-4"></div>
+                </section>
+              </div>
+              <div class="dashboard-col col-span-1">
+                <section class="panel h-full">
+                  <div class="panel-header">
+                    <h2 id="events-title" data-i18n="events_title">Événements live</h2>
+                  </div>
+                  <ul id="event-list" class="log-list mt-4"></ul>
+                </section>
+              </div>
+              <div class="dashboard-col col-span-1">
+                <section class="panel h-full">
+                  <div class="panel-header">
+                    <h2 id="commentary-title" data-i18n="commentary_title">Commentaire live</h2>
+                  </div>
+                  <div id="commentary" class="stack mt-4"></div>
+                </section>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
