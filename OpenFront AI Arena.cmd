@@ -2,11 +2,12 @@
 setlocal
 
 set "ROOT=%~dp0"
+set "WORKSPACE_ROOT=%ROOT%workspace"
 set "OPENFRONT_ROOT=%ROOT%apps\OpenFrontIO"
 
 if not exist "%OPENFRONT_ROOT%\package.json" (
   echo First run detected. Installing workspace...
-  powershell -ExecutionPolicy Bypass -File "%ROOT%scripts\setup-workspace.ps1"
+  powershell -ExecutionPolicy Bypass -File "%WORKSPACE_ROOT%\scripts\setup-workspace.ps1"
   if errorlevel 1 (
     echo Installation failed.
     pause
@@ -16,7 +17,7 @@ if not exist "%OPENFRONT_ROOT%\package.json" (
 
 if not exist "%OPENFRONT_ROOT%\node_modules" (
   echo Dependencies are missing. Running setup...
-  powershell -ExecutionPolicy Bypass -File "%ROOT%scripts\setup-workspace.ps1"
+  powershell -ExecutionPolicy Bypass -File "%WORKSPACE_ROOT%\scripts\setup-workspace.ps1"
   if errorlevel 1 (
     echo Installation failed.
     pause

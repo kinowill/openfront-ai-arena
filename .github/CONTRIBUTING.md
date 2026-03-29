@@ -6,7 +6,7 @@ This repository is the top-level workspace for `OpenFrontArena`.
 
 - `apps/OpenFrontArena` is developed directly here
 - `apps/OpenFrontIO` is treated as a pinned upstream vendor checkout
-- local changes needed on top of upstream `OpenFrontIO` must be captured as patch files in `patches/openfrontio/`
+- local changes needed on top of upstream `OpenFrontIO` must be captured as patch files in `workspace/patches/openfrontio/`
 
 ## Basic workflow
 
@@ -19,9 +19,9 @@ This repository is the top-level workspace for `OpenFrontArena`.
 
 When the upstream dependency moves:
 
-1. Update `openfrontio.lock.json`
+1. Update `workspace/openfrontio.lock.json`
 2. Refresh `apps/OpenFrontIO`
-3. Rebuild the patch files under `patches/openfrontio/`
+3. Rebuild the patch files under `workspace/patches/openfrontio/`
 4. Verify setup still works from a clean checkout
 
 ## Pull requests
@@ -29,6 +29,6 @@ When the upstream dependency moves:
 Keep pull requests focused:
 
 - one feature or one cleanup pass at a time
-- mention whether `openfrontio.lock.json` changed
+- mention whether `workspace/openfrontio.lock.json` changed
 - mention whether the patch set changed
 - include the local test path you used

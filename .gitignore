@@ -9,6 +9,7 @@ Thumbs.db
 .vscode/
 *.log
 logs/
+workspace/logs/
 apps/OpenFrontArena/logs/
 apps/OpenFrontArena/node_modules/
 apps/OpenFrontArena/dist/

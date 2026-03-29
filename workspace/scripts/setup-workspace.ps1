@@ -1,12 +1,13 @@
-$ErrorActionPreference = "Stop"
-
 param(
   [switch]$RefreshVendor
 )
 
+$ErrorActionPreference = "Stop"
+
 $workspaceRoot = Split-Path -Parent $PSScriptRoot
-$arenaRoot = Join-Path $workspaceRoot "apps\OpenFrontArena"
-$openfrontRoot = Join-Path $workspaceRoot "apps\OpenFrontIO"
+$repoRoot = Split-Path -Parent $workspaceRoot
+$arenaRoot = Join-Path $repoRoot "apps\OpenFrontArena"
+$openfrontRoot = Join-Path $repoRoot "apps\OpenFrontIO"
 $lockFile = Join-Path $workspaceRoot "openfrontio.lock.json"
 
 if (-not (Test-Path $lockFile)) {
@@ -72,7 +73,10 @@ function Ensure-OpenFrontPatch {
     }
 
     $reverseCheckOk = $false
-    & git -C $openfrontRoot apply --ignore-space-change --ignore-whitespace --reverse --check $patchFile *> $null
+    try {
+      & git -C $openfrontRoot apply --ignore-space-change --ignore-whitespace --reverse --check $patchFile *> $null
+    } catch {
+    }
     if ($LASTEXITCODE -eq 0) {
       $reverseCheckOk = $true
     }
@@ -82,7 +86,10 @@ function Ensure-OpenFrontPatch {
       continue
     }
 
-    & git -C $openfrontRoot apply --ignore-space-change --ignore-whitespace --check $patchFile *> $null
+    try {
+      & git -C $openfrontRoot apply --ignore-space-change --ignore-whitespace --check $patchFile *> $null
+    } catch {
+    }
     if ($LASTEXITCODE -ne 0) {
       throw "Patch $(Split-Path $patchFile -Leaf) cannot be applied cleanly on OpenFrontIO commit $openfrontCommit. Refresh or rebuild the patch set."
     }
@@ -114,4 +121,4 @@ npm install --prefix $arenaRoot
 
 Write-Host ""
 Write-Host "Workspace ready."
-Write-Host "Next step: double-click 'Launch OpenFront Arena.cmd'"
+Write-Host "Next step: double-click 'OpenFront AI Arena.cmd'"
