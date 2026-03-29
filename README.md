@@ -28,6 +28,8 @@ On first launch, the workspace installs the pinned `OpenFrontIO` base automatica
 
 - `apps/OpenFrontArena`
   The actual product: control room UI, orchestration logic, bot runtimes, and Windows launch flow.
+- `.github`
+  Repository policy, issue templates, and contribution metadata.
 - `patches/openfrontio`
   Local patches applied on top of upstream `OpenFrontIO`.
 - `scripts`

@@ -10,10 +10,10 @@ This repository is the top-level workspace for `OpenFrontArena`.
 
 ## Basic workflow
 
-1. Run `Install OpenFront Arena.cmd`
+1. Run `OpenFront AI Arena.cmd`
 2. Make changes in `apps/OpenFrontArena`
 3. If `apps/OpenFrontIO` must change, regenerate or update the patch set instead of committing the vendor checkout
-4. Test locally with `Launch OpenFront Arena.cmd`
+4. Test locally through the control room started by `OpenFront AI Arena.cmd`
 
 ## Updating the OpenFrontIO vendor base
 
