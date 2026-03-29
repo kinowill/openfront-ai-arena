@@ -1,41 +1,56 @@
-# OpenFront Arena
+# OpenFront AI Arena
 
-OpenFront AI Arena is a local control room and match orchestration workspace for testing OpenFront matches with local AI, remote API models, native bots, and human joins from a single entry point.
+OpenFront AI Arena is a clean local control room for running OpenFront matches with:
 
-## Quick start
+- local LLM agents
+- remote API agents
+- native OpenFront bots
+- reserved human joins on the same live match
+
+The goal is simple: one repo, one visible launcher, one operator surface.
+
+## Quick Start
 
 1. Clone this repository
 2. Double-click [OpenFront AI Arena.cmd](./OpenFront%20AI%20Arena.cmd)
 
-On first run, the launcher installs the pinned `OpenFrontIO` vendor checkout automatically, applies the local patch set, installs dependencies, then starts the arena.
+On first launch, the workspace installs the pinned `OpenFrontIO` base automatically, applies the local compatibility patch set, installs dependencies, then opens the arena stack.
 
-## What gets installed
+## What It Does
 
-This repository does not commit the `OpenFrontIO` vendor checkout directly.
+- prepares a pinned local OpenFront development stack
+- applies the exact local patch set required by the arena workflow
+- launches a control room for configuring matches and slots
+- supports local and remote AI backends through the UI
+- keeps the repository root intentionally minimal and easy to scan
 
-Instead, setup will:
+## Product Shape
 
-1. clone upstream `OpenFrontIO`
-2. pin the exact locked commit from [openfrontio.lock.json](./openfrontio.lock.json)
-3. apply the local compatibility patch set from [patches/openfrontio](./patches/openfrontio)
-4. install dependencies for both `OpenFrontIO` and `OpenFrontArena`
-
-That keeps this repository small while preserving compatibility with the exact engine version used during development.
-
-## Repository layout
-
-- `apps/OpenFrontArena`: arena app, control room UI, orchestration logic, Windows launch helpers
-- `patches/openfrontio`: local patch set applied on top of upstream `OpenFrontIO`
-- `scripts`: workspace setup and vendor refresh scripts
-- `openfrontio.lock.json`: upstream repo URL, pinned commit, and patch list
+- `apps/OpenFrontArena`
+  The actual product: control room UI, orchestration logic, bot runtimes, and Windows launch flow.
+- `patches/openfrontio`
+  Local patches applied on top of upstream `OpenFrontIO`.
+- `scripts`
+  Setup and maintenance scripts.
+- `openfrontio.lock.json`
+  The upstream repo source, the pinned commit, and the patch list.
 
 The only user-facing launcher kept at the repository root is:
 
 - [OpenFront AI Arena.cmd](./OpenFront%20AI%20Arena.cmd)
 
-The stop helper stays out of the way under:
+## Install Model
 
-- `scripts/windows/Stop OpenFront AI Arena.cmd`
+This repository does not commit the `OpenFrontIO` vendor checkout itself.
+
+Instead, setup will:
+
+1. clone upstream `OpenFrontIO`
+2. checkout the exact locked commit from [openfrontio.lock.json](./openfrontio.lock.json)
+3. apply the local compatibility patch set from [patches/openfrontio](./patches/openfrontio)
+4. install dependencies for both `OpenFrontIO` and `OpenFrontArena`
+
+That keeps this repository smaller, cleaner, and reproducible for testers.
 
 ## Requirements
 
@@ -43,13 +58,14 @@ The stop helper stays out of the way under:
 - Git
 - Node.js and npm
 
-## Notes for testers
+## Notes
 
-- If setup fails because a patch no longer applies cleanly, the error message will tell you which patch drifted and which locked commit was expected.
-- Local LLM configuration is done from the control room UI, not from a separate launcher.
-- The root is intentionally kept minimal so the repository reads cleanly on GitHub.
+- Local LLM configuration happens in the control room UI, not through a separate launcher.
+- If setup fails because a patch no longer applies cleanly, the error message tells you which patch drifted and which locked commit was expected.
+- The stop helper is intentionally kept out of the root:
+  `scripts/windows/Stop OpenFront AI Arena.cmd`
 
-## Updating the vendor base
+## Updating Upstream
 
 If the upstream `OpenFrontIO` base needs to move later, run:
 
@@ -57,8 +73,8 @@ If the upstream `OpenFrontIO` base needs to move later, run:
 powershell -ExecutionPolicy Bypass -File .\scripts\update-openfrontio.ps1
 ```
 
-Then verify that:
+Then verify:
 
-- the pinned commit in `openfrontio.lock.json` is still correct
+- the pinned commit in `openfrontio.lock.json`
 - the patch set still applies cleanly
 - the full install path still works from a clean checkout

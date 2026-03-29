@@ -1,8 +1,8 @@
 {
-  "name": "openfront-arena-workspace",
+  "name": "openfront-ai-arena",
   "private": true,
   "version": "0.1.0",
-  "description": "Single-entry workspace for OpenFront Arena with a pinned OpenFrontIO vendor setup.",
+  "description": "Single-entry OpenFront AI Arena workspace with a pinned OpenFrontIO base and local patch set.",
   "license": "MIT",
   "scripts": {
     "setup": "powershell -ExecutionPolicy Bypass -File .\\scripts\\setup-workspace.ps1",
