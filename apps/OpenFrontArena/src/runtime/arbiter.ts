@@ -31,6 +31,29 @@ function waitFallback(observation: BotObservationV1): ValidAction {
   );
 }
 
+function productiveFallback(observation: BotObservationV1): ValidAction | null {
+  const productiveTypes: ValidAction["type"][] = [
+    "expand",
+    "attack_land",
+    "attack_naval",
+    "build_structure",
+    "upgrade_structure",
+    "assist_ally",
+    "set_target",
+    "donate_gold",
+    "donate_troops",
+  ];
+
+  for (const type of productiveTypes) {
+    const match = observation.validActions.find((action) => action.type === type);
+    if (match) {
+      return match;
+    }
+  }
+
+  return null;
+}
+
 export function arbitrateDecision(
   observation: BotObservationV1,
   decision: BotDecisionV1,
@@ -40,6 +63,19 @@ export function arbitrateDecision(
   );
 
   if (selected) {
+    if (selected.type === "wait") {
+      const productive = productiveFallback(observation);
+      if (productive) {
+        return {
+          requestedActionId: decision.selectedActionId,
+          executedAction: productive,
+          validationErrors: [
+            "selected_action_id resolved to wait while productive actions were available",
+          ],
+          fallbackUsed: true,
+        };
+      }
+    }
     return {
       requestedActionId: decision.selectedActionId,
       executedAction: selected,

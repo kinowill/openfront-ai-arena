@@ -57,6 +57,7 @@ export class HeadlessBotClient {
   private playQueued = false;
   private spawnAttempt = 0;
   private runnerBroken = false;
+  private lastActedTick = -1;
 
   constructor(private readonly options: HeadlessBotClientOptions) {}
 
@@ -403,6 +404,14 @@ export class HeadlessBotClient {
       spawned: observation.player.spawned,
     });
 
+    if (observation.player.spawned && observation.match.tick <= this.lastActedTick) {
+      await this.debug("intent_skipped", {
+        tick: observation.match.tick,
+        selectedActionType: "already_acted_this_tick",
+      });
+      return;
+    }
+
     if (!player.hasSpawned()) {
       const spawnActions = observation.validActions.filter((action) => action.type === "spawn");
       const preferredOffset =
@@ -469,6 +478,7 @@ export class HeadlessBotClient {
         type: "intent",
         intent,
       });
+      this.lastActedTick = observation.match.tick;
       await this.debug("intent_sent", {
         tick: observation.match.tick,
         intentType: intent.type,
