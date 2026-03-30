@@ -210,6 +210,8 @@ export class HeadlessBotClient {
     this.assignedClientId = message.myClientID ?? this.assignedClientId;
     this.options.matchRef.id = message.gameStartInfo.gameID;
     this.options.matchRef.mapName = message.gameStartInfo.config.gameMap;
+    // OpenFrontIO game logic expects a bundled GAME_ENV even when reused from Node.
+    process.env.GAME_ENV ??= "dev";
     this.runner = await createGameRunner(
       message.gameStartInfo,
       this.assignedClientId ?? undefined,
