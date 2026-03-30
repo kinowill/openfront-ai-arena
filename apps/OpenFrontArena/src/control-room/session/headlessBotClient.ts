@@ -55,6 +55,7 @@ export class HeadlessBotClient {
   private joinedLobby = false;
   private playInFlight = false;
   private playQueued = false;
+  private spawnAttempt = 0;
 
   constructor(private readonly options: HeadlessBotClientOptions) {}
 
@@ -333,7 +334,16 @@ export class HeadlessBotClient {
     });
 
     if (!player.hasSpawned()) {
-      const spawnAction = observation.validActions.find((action) => action.type === "spawn");
+      const spawnActions = observation.validActions.filter((action) => action.type === "spawn");
+      const preferredOffset =
+        Math.abs(
+          Array.from(this.options.bot.identity.id).reduce(
+            (hash, char) => ((hash << 5) - hash + char.charCodeAt(0)) | 0,
+            0,
+          ),
+        ) % Math.max(1, spawnActions.length);
+      const spawnAction =
+        spawnActions[(preferredOffset + this.spawnAttempt) % Math.max(1, spawnActions.length)];
       if (!spawnAction) {
         await this.debug("intent_skipped", {
           tick: observation.match.tick,
@@ -341,6 +351,7 @@ export class HeadlessBotClient {
         });
         return;
       }
+      this.spawnAttempt += 1;
 
       const spawnIntent = buildIntentFromValidAction(
         spawnAction,
@@ -356,10 +367,13 @@ export class HeadlessBotClient {
           tick: observation.match.tick,
           intentType: spawnIntent.type,
           forced: true,
+          selectedActionId: spawnAction.id,
         });
       }
       return;
     }
+
+    this.spawnAttempt = 0;
 
     const runtimeDecision = await this.options.bot.decide(observation, {
       tick: observation.match.tick,
