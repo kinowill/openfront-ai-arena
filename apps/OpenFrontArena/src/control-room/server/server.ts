@@ -62,155 +62,183 @@ async function readJsonBody(req: http.IncomingMessage): Promise<unknown> {
   return JSON.parse(raw);
 }
 
+function writeJson(
+  res: http.ServerResponse,
+  statusCode: number,
+  payload: unknown,
+): void {
+  res.writeHead(statusCode, { "Content-Type": "application/json; charset=utf-8" });
+  res.end(JSON.stringify(payload));
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Unknown server error";
+}
+
 export function startControlRoomServer(port = 4318): http.Server {
   const server = http.createServer(async (req, res) => {
-    const url = new URL(req.url ?? "/", `http://${req.headers.host}`);
-    const dashboard = async () => ({
-      controlRoom: await buildControlRoomSnapshot(LOG_FILE),
-      session: controlRoomSessionManager.snapshot(),
-    });
+    try {
+      const url = new URL(req.url ?? "/", `http://${req.headers.host}`);
+      const dashboard = async () => ({
+        controlRoom: await buildControlRoomSnapshot(LOG_FILE),
+        session: controlRoomSessionManager.snapshot(),
+      });
 
-    if (url.pathname === "/api/state") {
-      const snapshot = await buildControlRoomSnapshot(LOG_FILE);
-      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
-      res.end(JSON.stringify(snapshot));
-      return;
-    }
-
-    if (url.pathname === "/api/session" && req.method === "GET") {
-      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
-      res.end(JSON.stringify(controlRoomSessionManager.snapshot()));
-      return;
-    }
-
-    if (url.pathname === "/api/session" && req.method === "PUT") {
-      const body = (await readJsonBody(req)) as Record<string, unknown>;
-      const snapshot = controlRoomSessionManager.updateConfig(body as any);
-      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
-      res.end(JSON.stringify(snapshot));
-      return;
-    }
-
-    if (url.pathname === "/api/session/start" && req.method === "POST") {
-      const body = (await readJsonBody(req)) as {
-        slotSecrets?: Array<{ slotId?: string; apiKey?: string | null }>;
-      };
-      const snapshot = await controlRoomSessionManager.start(body);
-      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
-      res.end(JSON.stringify(snapshot));
-      return;
-    }
-
-    if (url.pathname === "/api/session/stop" && req.method === "POST") {
-      const snapshot = await controlRoomSessionManager.stop();
-      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
-      res.end(JSON.stringify(snapshot));
-      return;
-    }
-
-    if (url.pathname === "/api/dashboard") {
-      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
-      res.end(JSON.stringify(await dashboard()));
-      return;
-    }
-
-    if (url.pathname === "/api/maps/preview" && req.method === "GET") {
-      const mapName = url.searchParams.get("name")?.trim();
-      if (!mapName || mapName === RANDOM_MAP_VALUE) {
-        res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
-        res.end("Map preview not found");
+      if (url.pathname === "/api/state") {
+        const snapshot = await buildControlRoomSnapshot(LOG_FILE);
+        writeJson(res, 200, snapshot);
         return;
       }
-      try {
-        await serveFile(res, mapThumbnailPath(mapName));
-      } catch {
-        res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
-        res.end("Map preview not found");
+
+      if (url.pathname === "/api/session" && req.method === "GET") {
+        writeJson(res, 200, controlRoomSessionManager.snapshot());
+        return;
       }
-      return;
-    }
 
-    if (url.pathname === "/api/logs/clear" && req.method === "POST") {
-      await fs.mkdir(path.dirname(LOG_FILE), { recursive: true });
-      await fs.writeFile(LOG_FILE, "", "utf8");
-      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
-      res.end(JSON.stringify(await dashboard()));
-      return;
-    }
+      if (url.pathname === "/api/session" && req.method === "PUT") {
+        const body = (await readJsonBody(req)) as Record<string, unknown>;
+        const snapshot = controlRoomSessionManager.updateConfig(body as any);
+        writeJson(res, 200, snapshot);
+        return;
+      }
 
-    if (url.pathname === "/api/integrations/check" && req.method === "POST") {
-      const body = (await readJsonBody(req)) as {
-        backend?: string;
-        baseUrl?: string | null;
-        model?: string | null;
-        apiKeyEnv?: string | null;
-        apiKey?: string | null;
-      };
+      if (url.pathname === "/api/session/start" && req.method === "POST") {
+        const body = (await readJsonBody(req)) as {
+          slotSecrets?: Array<{ slotId?: string; apiKey?: string | null }>;
+        };
+        const snapshot = await controlRoomSessionManager.start(body);
+        writeJson(res, 200, snapshot);
+        return;
+      }
 
-      if (body.backend !== "local_llm" && body.backend !== "remote_api") {
-        res.writeHead(400, { "Content-Type": "application/json; charset=utf-8" });
-        res.end(
-          JSON.stringify({ error: "backend must be local_llm or remote_api" }),
+      if (url.pathname === "/api/session/stop" && req.method === "POST") {
+        const snapshot = await controlRoomSessionManager.stop();
+        writeJson(res, 200, snapshot);
+        return;
+      }
+
+      if (url.pathname === "/api/dashboard") {
+        writeJson(res, 200, await dashboard());
+        return;
+      }
+
+      if (url.pathname === "/api/maps/preview" && req.method === "GET") {
+        const mapName = url.searchParams.get("name")?.trim();
+        if (!mapName || mapName === RANDOM_MAP_VALUE) {
+          res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+          res.end("Map preview not found");
+          return;
+        }
+        try {
+          await serveFile(res, mapThumbnailPath(mapName));
+        } catch {
+          res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+          res.end("Map preview not found");
+        }
+        return;
+      }
+
+      if (url.pathname === "/api/logs/clear" && req.method === "POST") {
+        await fs.mkdir(path.dirname(LOG_FILE), { recursive: true });
+        await fs.writeFile(LOG_FILE, "", "utf8");
+        writeJson(res, 200, await dashboard());
+        return;
+      }
+
+      if (url.pathname === "/api/integrations/check" && req.method === "POST") {
+        const body = (await readJsonBody(req)) as {
+          backend?: string;
+          baseUrl?: string | null;
+          model?: string | null;
+          apiKeyEnv?: string | null;
+          apiKey?: string | null;
+        };
+
+        if (body.backend !== "local_llm" && body.backend !== "remote_api") {
+          writeJson(res, 400, { error: "backend must be local_llm or remote_api" });
+          return;
+        }
+
+        const defaultBaseUrl =
+          body.backend === "local_llm"
+            ? process.env.OPENFRONT_BOTS_LOCAL_LLM_BASE_URL ??
+              "http://127.0.0.1:11434/v1"
+            : process.env.OPENFRONT_BOTS_REMOTE_API_BASE_URL ?? null;
+        const apiKey =
+          body.backend === "remote_api"
+            ? body.apiKey?.trim() ||
+              ((body.apiKeyEnv ? process.env[body.apiKeyEnv] : undefined) ??
+                process.env.OPENFRONT_BOTS_REMOTE_API_KEY)
+            : undefined;
+
+        const result = await checkOpenAICompatibleIntegration({
+          backend: body.backend,
+          baseUrl: body.baseUrl?.trim() || defaultBaseUrl || "",
+          model: body.model?.trim() || null,
+          apiKey,
+        });
+
+        writeJson(res, 200, result);
+        return;
+      }
+
+      if (url.pathname === "/api/operator/execute" && req.method === "POST") {
+        const body = (await readJsonBody(req)) as {
+          playerId?: string;
+          actionId?: string;
+        };
+        const snapshot = controlRoomSessionManager.executeOperatorAction(
+          body.playerId ?? "",
+          body.actionId ?? "",
         );
+        writeJson(res, 200, snapshot);
         return;
       }
 
-      const defaultBaseUrl =
-        body.backend === "local_llm"
-          ? process.env.OPENFRONT_BOTS_LOCAL_LLM_BASE_URL ??
-            "http://127.0.0.1:11434/v1"
-          : process.env.OPENFRONT_BOTS_REMOTE_API_BASE_URL ?? null;
-      const apiKey =
-        body.backend === "remote_api"
-          ? body.apiKey?.trim() ||
-            ((body.apiKeyEnv ? process.env[body.apiKeyEnv] : undefined) ??
-              process.env.OPENFRONT_BOTS_REMOTE_API_KEY)
-          : undefined;
+      if (url.pathname === "/api/events") {
+        res.writeHead(200, {
+          "Content-Type": "text/event-stream; charset=utf-8",
+          "Cache-Control": "no-cache",
+          Connection: "keep-alive",
+        });
 
-      const result = await checkOpenAICompatibleIntegration({
-        backend: body.backend,
-        baseUrl: body.baseUrl?.trim() || defaultBaseUrl || "",
-        model: body.model?.trim() || null,
-        apiKey,
-      });
+        let closed = false;
+        const send = async () => {
+          try {
+            if (closed) return;
+            res.write(`data: ${JSON.stringify(await dashboard())}\n\n`);
+          } catch (error) {
+            if (!closed) {
+              res.write(
+                `event: error\ndata: ${JSON.stringify({ error: errorMessage(error) })}\n\n`,
+              );
+            }
+          }
+        };
 
-      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
-      res.end(JSON.stringify(result));
-      return;
+        await send();
+        const interval = setInterval(() => {
+          void send();
+        }, 2000);
+        req.on("close", () => {
+          closed = true;
+          clearInterval(interval);
+        });
+        return;
+      }
+
+      await serveFile(res, routeToUiFile(url.pathname));
+    } catch (error) {
+      if (!res.headersSent) {
+        writeJson(res, 500, { error: errorMessage(error) });
+      } else {
+        try {
+          res.end();
+        } catch {
+          // Ignore close failures after partial responses.
+        }
+      }
     }
-
-    if (url.pathname === "/api/operator/execute" && req.method === "POST") {
-      const body = (await readJsonBody(req)) as {
-        playerId?: string;
-        actionId?: string;
-      };
-      const snapshot = controlRoomSessionManager.executeOperatorAction(
-        body.playerId ?? "",
-        body.actionId ?? "",
-      );
-      res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
-      res.end(JSON.stringify(snapshot));
-      return;
-    }
-
-    if (url.pathname === "/api/events") {
-      res.writeHead(200, {
-        "Content-Type": "text/event-stream; charset=utf-8",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
-      });
-
-      const send = async () => {
-        res.write(`data: ${JSON.stringify(await dashboard())}\n\n`);
-      };
-
-      await send();
-      const interval = setInterval(send, 2000);
-      req.on("close", () => clearInterval(interval));
-      return;
-    }
-
-    await serveFile(res, routeToUiFile(url.pathname));
   });
 
   server.listen(port, "127.0.0.1");
