@@ -212,6 +212,12 @@ export class HeadlessBotClient {
     this.options.matchRef.mapName = message.gameStartInfo.config.gameMap;
     // OpenFrontIO game logic expects a bundled GAME_ENV even when reused from Node.
     process.env.GAME_ENV ??= "dev";
+    await this.debug("start_runner_begin", {
+      gameId: message.gameStartInfo.gameID,
+      map: message.gameStartInfo.config.gameMap,
+      mapSize: message.gameStartInfo.config.gameMapSize,
+      players: message.gameStartInfo.players.length,
+    });
     this.runner = await createGameRunner(
       message.gameStartInfo,
       this.assignedClientId ?? undefined,
@@ -220,14 +226,25 @@ export class HeadlessBotClient {
         // The bot only needs deterministic state reconstruction here.
       },
     );
+    await this.debug("start_runner_ready", {
+      assignedClientId: this.assignedClientId,
+      ticks: this.runner.game.ticks(),
+    });
 
     for (const turn of message.turns) {
       this.runner.addTurn(turn);
       this.runner.executeNextTick();
       this.latestTurn = Math.max(this.latestTurn, turn.turnNumber);
     }
+    await this.debug("start_backlog_applied", {
+      latestTurn: this.latestTurn,
+      backlog: message.turns.length,
+    });
 
     await this.playCurrentTurn();
+    await this.debug("start_first_play_completed", {
+      latestTurn: this.latestTurn,
+    });
   }
 
   private async onTurn(turn: Turn): Promise<void> {
