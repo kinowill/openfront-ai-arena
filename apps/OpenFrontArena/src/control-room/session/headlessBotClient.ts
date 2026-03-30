@@ -47,6 +47,9 @@ export class HeadlessBotClient {
   private assignedClientId: string | null = null;
   private latestTurn = -1;
   private stopped = false;
+  private joinResolve: (() => void) | null = null;
+  private joinReject: ((error: Error) => void) | null = null;
+  private joinedLobby = false;
 
   constructor(private readonly options: HeadlessBotClientOptions) {}
 
@@ -60,11 +63,24 @@ export class HeadlessBotClient {
 
     await new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => {
+        this.joinResolve = null;
+        this.joinReject = null;
         reject(new Error(`Bot ${this.options.displayName} join timeout.`));
       }, 10000);
+      this.joinResolve = () => {
+        clearTimeout(timeout);
+        this.joinResolve = null;
+        this.joinReject = null;
+        resolve();
+      };
+      this.joinReject = (error) => {
+        clearTimeout(timeout);
+        this.joinResolve = null;
+        this.joinReject = null;
+        reject(error);
+      };
 
       this.socket.addEventListener("open", async () => {
-        clearTimeout(timeout);
         await this.send({
           type: "join",
           token: this.token,
@@ -74,7 +90,6 @@ export class HeadlessBotClient {
           turnstileToken: null,
         } satisfies ClientJoinMessage);
         this.startPing();
-        resolve();
       });
 
       this.socket.addEventListener("message", (event: MessageEvent<string>) => {
@@ -87,10 +102,14 @@ export class HeadlessBotClient {
       });
       this.socket.addEventListener("close", () => {
         this.stopPing();
+        if (!this.joinedLobby && this.joinReject) {
+          this.joinReject(new Error(`Bot ${this.options.displayName} disconnected before lobby join.`));
+        }
       });
       this.socket.addEventListener("error", () => {
-        clearTimeout(timeout);
-        reject(new Error(`Bot ${this.options.displayName} websocket error.`));
+        if (this.joinReject) {
+          this.joinReject(new Error(`Bot ${this.options.displayName} websocket error.`));
+        }
       });
     });
   }
@@ -118,10 +137,12 @@ export class HeadlessBotClient {
     switch (message.type) {
       case "lobby_info":
         this.assignedClientId = message.myClientID;
+        this.joinedLobby = true;
         this.options.onSummary?.(
           `${this.options.displayName} joined lobby ${message.lobby.gameID}.`,
           null,
         );
+        this.joinResolve?.();
         break;
       case "start":
         await this.onStart(message);
@@ -130,6 +151,9 @@ export class HeadlessBotClient {
         await this.onTurn(message.turn);
         break;
       case "error":
+        if (!this.joinedLobby && this.joinReject) {
+          this.joinReject(new Error(`${this.options.displayName} transport error: ${message.error}`));
+        }
         this.options.onSummary?.(
           `${this.options.displayName} transport error: ${message.error}`,
           null,
