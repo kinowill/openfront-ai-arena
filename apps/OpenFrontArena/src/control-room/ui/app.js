@@ -352,6 +352,7 @@ const TEAM_COLORS = [
   { id: "Orange", hex: "#f97316", labelKey: "team_orange" },
   { id: "Green", hex: "#22c55e", labelKey: "team_green" },
 ];
+const SESSION_CONFIG_STORAGE_KEY = "openfront.controlRoom.sessionConfig.v1";
 const DIRECT_SECRET_STORAGE_KEY = "openfront.controlRoom.directSecrets.v1";
 const VAULT_STORAGE_KEY = "openfront.controlRoom.secretVault.v1";
 const VAULT_PBKDF2_ITERATIONS = 200000;
@@ -417,6 +418,15 @@ function saveJsonStorage(key, value) {
   } catch {
     // Ignore storage quota and private browsing failures.
   }
+}
+
+function loadStoredSessionConfig() {
+  return loadJsonStorage(SESSION_CONFIG_STORAGE_KEY, null);
+}
+
+function persistSessionConfig(config) {
+  if (!config) return;
+  saveJsonStorage(SESSION_CONFIG_STORAGE_KEY, config);
 }
 
 function applyI18n() {
@@ -1525,13 +1535,16 @@ async function api(url, options = {}) {
 }
 
 async function saveSession() {
+  const nextConfig = collectSessionConfig();
+  persistSessionConfig(nextConfig);
   const session = await api("/api/session", {
     method: "PUT",
-    body: JSON.stringify(collectSessionConfig()),
+    body: JSON.stringify(nextConfig),
   });
   latestDashboard.session = session;
   sessionDirty = false;
   draftSessionConfig = clone(session.config);
+  persistSessionConfig(session.config);
   renderSession(session);
   setStatus(t("save_done"), "stable");
 }
@@ -1568,6 +1581,7 @@ async function stopSession() {
   latestDashboard.session = session;
   sessionDirty = false;
   draftSessionConfig = clone(session.config);
+  persistSessionConfig(session.config);
   renderSession(session);
   setStatus(t("stopped"), "waiting");
 }
@@ -1590,12 +1604,14 @@ function refreshDraftFromDom() {
   if (!latestDashboard?.session) return;
   ensureDraftConfig();
   draftSessionConfig = collectSessionConfig();
+  persistSessionConfig(draftSessionConfig);
   latestDashboard.session.config = clone(draftSessionConfig);
 }
 
 function addSlot(kind) {
   ensureDraftConfig();
   draftSessionConfig.slots.push(createSlotDraft(kind));
+  persistSessionConfig(draftSessionConfig);
   latestDashboard.session.config = clone(draftSessionConfig);
   sessionDirty = true;
   renderSession(latestDashboard.session);
@@ -1607,6 +1623,7 @@ function addBotBatch(count) {
   for (let index = 0; index < safeCount; index += 1) {
     draftSessionConfig.slots.push(createSlotDraft("bot"));
   }
+  persistSessionConfig(draftSessionConfig);
   latestDashboard.session.config = clone(draftSessionConfig);
   sessionDirty = true;
   renderSession(latestDashboard.session);
@@ -1618,6 +1635,7 @@ function addNativeBotBatch(count) {
     0,
     Math.min(400, Number(draftSessionConfig.nativeBotCount ?? 0) + count),
   );
+  persistSessionConfig(draftSessionConfig);
   latestDashboard.session.config = clone(draftSessionConfig);
   sessionDirty = true;
   renderSession(latestDashboard.session);
@@ -1629,6 +1647,7 @@ function removeNativeBotBatch(count) {
     0,
     Number(draftSessionConfig.nativeBotCount ?? 0) - Math.max(0, count),
   );
+  persistSessionConfig(draftSessionConfig);
   latestDashboard.session.config = clone(draftSessionConfig);
   sessionDirty = true;
   renderSession(latestDashboard.session);
@@ -1637,6 +1656,7 @@ function removeNativeBotBatch(count) {
 function clearNativeBots() {
   ensureDraftConfig();
   draftSessionConfig.nativeBotCount = 0;
+  persistSessionConfig(draftSessionConfig);
   latestDashboard.session.config = clone(draftSessionConfig);
   sessionDirty = true;
   renderSession(latestDashboard.session);
@@ -1653,6 +1673,7 @@ function removeSlot(index) {
     updateSlotSecret(removedSlotId, "");
     updateSlotSecret(removedSlotId, "", { persist: false });
   }
+  persistSessionConfig(draftSessionConfig);
   latestDashboard.session.config = clone(draftSessionConfig);
   sessionDirty = true;
   renderSession(latestDashboard.session);
@@ -1799,6 +1820,7 @@ async function saveSlotSecretToVault(index) {
     secretMode: "vault",
     secretRef: secretId,
   });
+  persistSessionConfig(draftSessionConfig);
   latestDashboard.session.config = clone(draftSessionConfig);
   sessionDirty = true;
   setStatus(t("vault_secret_saved"), "stable");
@@ -1816,6 +1838,7 @@ function deleteSlotVaultSecret(index) {
     secretMode: "direct",
     secretRef: null,
   });
+  persistSessionConfig(draftSessionConfig);
   latestDashboard.session.config = clone(draftSessionConfig);
   sessionDirty = true;
   setStatus(t("vault_secret_deleted"), "stable");
@@ -1997,10 +2020,16 @@ function bind() {
 }
 
 function renderDashboard(payload) {
+  const storedSessionConfig = loadStoredSessionConfig();
   if (sessionDirty && draftSessionConfig) {
     payload.session.config = clone(draftSessionConfig);
+  } else if (storedSessionConfig) {
+    draftSessionConfig = clone(storedSessionConfig);
+    payload.session.config = clone(storedSessionConfig);
+    sessionDirty = true;
   } else {
     draftSessionConfig = clone(payload.session.config);
+    persistSessionConfig(payload.session.config);
   }
 
   const active = document.activeElement;
