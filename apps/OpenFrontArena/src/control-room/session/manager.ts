@@ -47,6 +47,7 @@ const MAP_OPTIONS: ControlRoomMapOption[] = AVAILABLE_MAPS.map((name) => ({
   name,
   previewUrl: `/api/maps/preview?name=${encodeURIComponent(name)}`,
 }));
+const LIVE_MAP_MAX_DIMENSION = 96;
 
 function defaultConfig(): ControlRoomSessionConfig {
   return {
@@ -198,20 +199,38 @@ export class ControlRoomSessionManager {
       return null;
     }
 
+    const sourceWidth = this.currentGame.width();
+    const sourceHeight = this.currentGame.height();
+    const width = Math.min(sourceWidth, LIVE_MAP_MAX_DIMENSION);
+    const height = Math.min(sourceHeight, LIVE_MAP_MAX_DIMENSION);
+    const stepX = sourceWidth / width;
+    const stepY = sourceHeight / height;
     const tiles: ControlRoomLiveMap["tiles"] = [];
-    this.currentGame.forEachTile((tile) => {
-      tiles.push({
-        terrain: this.currentGame!.isLand(tile) ? "land" : "water",
-        ownerId:
-          this.currentGame!.isLand(tile) && this.currentGame!.hasOwner(tile)
-            ? this.currentGame!.owner(tile).id()
-            : null,
-      });
-    });
+    for (let sampleY = 0; sampleY < height; sampleY += 1) {
+      for (let sampleX = 0; sampleX < width; sampleX += 1) {
+        const tileX = Math.min(
+          sourceWidth - 1,
+          Math.floor((sampleX + 0.5) * stepX),
+        );
+        const tileY = Math.min(
+          sourceHeight - 1,
+          Math.floor((sampleY + 0.5) * stepY),
+        );
+        const tile = tileY * sourceWidth + tileX;
+        const isLand = this.currentGame!.isLand(tile);
+        tiles.push({
+          terrain: isLand ? "land" : "water",
+          ownerId:
+            isLand && this.currentGame!.hasOwner(tile)
+              ? this.currentGame!.owner(tile).id()
+              : null,
+        });
+      }
+    }
 
     return {
-      width: this.currentGame.width(),
-      height: this.currentGame.height(),
+      width,
+      height,
       tiles,
       activePlayers: this.currentGame.players().map((player) => player.id()),
     };
