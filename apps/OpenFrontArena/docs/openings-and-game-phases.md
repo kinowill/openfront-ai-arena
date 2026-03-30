@@ -2,58 +2,67 @@
 
 ## Objectif
 
-Aider les bots à ne pas jouer chaque tick comme un problème isolé.
+Aider les bots a ne pas jouer chaque tick comme un probleme isole.
+
+## Principe
+
+Les phases de partie ne donnent pas un ordre d'actions obligatoire.
+
+Elles servent a lire :
+
+- quels leviers ont le plus de valeur maintenant ;
+- quels investissements deviennent plausibles ;
+- quels risques coutent le plus cher selon le moment de la partie.
 
 ## Phases utiles
 
 ### Early Game
 
-Caractéristiques :
+Caracteristiques :
 
 - beaucoup d'incertitude ;
 - expansion disponible ;
 - peu d'infrastructure ;
-- fronts pas encore stabilisés.
+- fronts pas encore stabilises.
 
-Priorités :
+Questions utiles :
 
-- expansion sûre ;
-- lecture de carte ;
-- premiers voisins ;
-- éviter le sur-engagement ;
-- préparer l'infrastructure adaptée à la géographie.
+- combien de neutre vaut encore plus qu'un combat precoce ;
+- quels voisins vont vraiment compter ;
+- quelle infrastructure preparer selon la geographie ;
+- combien de risque accepter avant d'avoir une base saine.
 
 ### Mid Game
 
-Caractéristiques :
+Caracteristiques :
 
-- premiers fronts sérieux ;
+- premiers fronts serieux ;
 - choix entre build, guerre, diplomatie ;
 - capture de petits voisins ;
-- ports/factories/soutien deviennent structurants.
+- ports, factories et soutien deviennent structurants.
 
-Priorités :
+Questions utiles :
 
-- choisir quels fronts compteront vraiment ;
-- transformer l'espace gagné en puissance durable ;
-- exploiter les ennemis faibles ;
-- ne pas garder trop de ressources inutilisées.
+- quels fronts compteront vraiment ;
+- comment transformer l'espace gagne en puissance durable ;
+- quels ennemis faibles ou exposes peuvent etre punis ;
+- ou un angle naval ou diplomatique vaut plus qu'un simple push frontal.
 
 ### Late Game
 
-Caractéristiques :
+Caracteristiques :
 
 - moins de joueurs ;
 - grands empires ;
 - lignes plus stables ou fronts massifs ;
-- valeur croissante des structures et du jeu stratégique.
+- valeur croissante des structures et du jeu strategique.
 
-Priorités :
+Questions utiles :
 
-- casser les positions fortes ;
-- protéger les actifs critiques ;
-- coordonner les focus ;
-- préparer les conditions de victoire.
+- quelle decision change vraiment la carte strategique ;
+- quels actifs critiques proteger ;
+- quels focus coordonner ;
+- quelles conditions de victoire preparer.
 
 ## Openings types
 
@@ -72,6 +81,8 @@ Priorités :
 
 ## Heuristiques bot
 
-- en early, éviter de sacrifier l'avenir pour une attaque médiocre ;
+- en early, eviter de sacrifier l'avenir pour une attaque mediocre ;
 - en mid, convertir l'espace en structures et en fronts gagnables ;
-- en late, privilégier les décisions qui changent réellement la carte stratégique.
+- en late, privilegier les decisions qui changent reellement la carte strategique.
+
+Ces heuristiques doivent rester souples. Elles n'annulent pas un coup tactique fort qui contredit le profil moyen de la phase.

@@ -2,104 +2,120 @@
 
 ## Objectif
 
-Définir comment laisser une vraie liberté stratégique aux modèles sans perdre le contrôle mécanique.
+Definir comment laisser une vraie liberte strategique aux modeles sans perdre le controle mecanique.
 
 ## Principe central
 
-On ne veut pas un bot "bridé".
+On ne veut pas un bot "bride".
 On veut un bot :
 
-- mécaniquement sûr ;
-- stratégiquement libre ;
-- comparable à d'autres bots ;
+- mecaniquement sur ;
+- strategiquement libre ;
+- comparable a d'autres bots ;
 - explicable.
 
-## Séparation des responsabilités
+## Separation des responsabilites
 
-### Le moteur décide
+### Le moteur decide
 
-- ce qui est légal ;
+- ce qui est legal ;
 - ce qui est atteignable ;
 - ce qui est payable ;
-- ce qui existe réellement sur la carte.
+- ce qui existe reellement sur la carte ;
+- quelles actions concretement executables sont disponibles.
 
-### Le modèle décide
+### Le modele decide
 
-- quelle direction stratégique prendre ;
+- quelle direction strategique prendre ;
 - quel front prioriser ;
 - quel risque accepter ;
 - quand construire ;
 - quand attaquer ;
 - quand temporiser ;
-- quand coopérer ou trahir.
+- quand cooperer ou trahir ;
+- quel vecteur d'action est le meilleur a ce tick.
 
-## Ce qu'il faut éviter
+## Ce qu'il faut eviter
 
-### Trop de liberté
+### Trop de liberte
 
-Le modèle hallucine :
+Le modele hallucine :
 
 - des actions impossibles ;
-- des cibles non adjacentes ;
-- des constructions illégales ;
+- des cibles non atteignables ;
+- des constructions illegales ;
 - des timings absurdes.
 
-### Trop peu de liberté
+### Trop peu de liberte
 
-Le modèle devient :
+Le modele devient :
 
-- prévisible ;
+- previsible ;
 - sans style ;
 - incapable d'innover ;
-- limité à un "top-1 valid action picker".
+- limite a un simple selecteur de "meilleure action valide" selon une checklist rigide.
 
-## Cadre recommandé
+## Cadre recommande
 
 Le meilleur compromis pour OpenFront est :
 
 1. observation riche
 2. plusieurs actions valides
-3. intention stratégique explicite
-4. sélection d'une action concrète
-5. mémoire courte des choix précédents
+3. contexte strategique visible
+4. selection d'une action concrete
+5. memoire courte des choix precedents
 
-## Trois niveaux de liberté
+## Trois niveaux de liberte
 
-### Liberté de style
+### Liberte de style
 
-Le bot peut être :
+Le bot peut etre :
 
 - expansionniste ;
-- défensif ;
+- defensif ;
 - opportuniste ;
 - diplomatique ;
 - naval ;
-- nucléaire ;
-- économique ;
+- nucleaire ;
+- economique ;
 - hybride.
 
-### Liberté de priorité
+### Liberte de priorite
 
 Le bot choisit entre :
 
-- défendre ;
+- defendre ;
 - construire ;
-- s'étendre ;
-- aider un allié ;
+- s'etendre ;
+- aider un allie ;
 - ouvrir un front ;
-- préparer un timing.
+- preparer un timing.
 
-### Liberté de tempo
+Il n'y a pas d'ordre universel impose entre ces familles. Le bon choix depend de la carte, du tick, des voisins, du tempo et du cout d'opportunite.
 
-Le bot décide :
+### Liberte de tempo
+
+Le bot decide :
 
 - d'attendre ;
 - de stocker ;
 - de harceler ;
 - de full-send ;
-- de prendre un risque calculé.
+- de prendre un risque calcule.
 
-## Recommandation d'implémentation
+## Point cle sur le naval
+
+Le naval ne doit pas etre modele comme un simple fallback quand la terre est impossible.
+
+Une action navale peut etre meilleure qu'une action terrestre meme si une frontiere terrestre existe deja, par exemple pour :
+
+- contourner une ligne dense ;
+- ouvrir un second front ;
+- menacer un arriere plus faible ;
+- gagner un meilleur tempo ;
+- forcer une mauvaise repartition adverse.
+
+## Recommandation d'implementation
 
 Au lieu de demander seulement :
 
@@ -107,7 +123,7 @@ Au lieu de demander seulement :
 
 demander :
 
-- `quel est ton objectif stratégique pour ce tick ?`
+- `quel est ton objectif strategique pour ce tick ?`
 - `pourquoi ?`
 - `quelle action valide s'y conforme le mieux ?`
 
@@ -115,7 +131,7 @@ demander :
 
 Cette approche permet d'obtenir :
 
-- des agents plus intéressants ;
+- des agents plus interessants ;
 - des comportements plus divers ;
 - des logs plus lisibles ;
-- une meilleure capacité à diagnostiquer les erreurs.
+- une meilleure capacite a diagnostiquer les erreurs.

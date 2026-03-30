@@ -2,11 +2,30 @@
 
 ## Objectif
 
-Fournir au modèle une observation compacte, stable et suffisamment riche pour prendre une décision correcte sans devoir reconstruire seul les règles du jeu.
+Fournir au modele une observation compacte, stable et suffisamment riche pour prendre une decision correcte sans devoir reconstruire seul les regles du jeu.
 
-## Règle de conception
+## Intention de conception
 
-L'observation envoyée à un bot doit être un contrat versionné.
+L'observation doit donner a l'IA une lecture exploitable du match comparable a celle d'un humain qui sait jouer, mais sous une forme structuree.
+
+Elle doit donc :
+
+- exposer les faits utiles ;
+- expliciter les contraintes mecaniques ;
+- rendre visibles les options realistes ;
+- aider a lire la carte, les fronts et les timings ;
+- laisser le choix strategique au modele.
+
+Elle ne doit pas :
+
+- imposer un plan ;
+- cacher les regles importantes ;
+- injecter une doctrine de jeu ;
+- forcer un ordre de priorite.
+
+## Regle de conception
+
+L'observation envoyee a un bot doit etre un contrat versionne.
 
 Elle doit donc porter explicitement :
 
@@ -17,69 +36,69 @@ Elle doit donc porter explicitement :
 
 ## Niveaux d'observation
 
-### 1. Observation brute contrôlée
+### 1. Observation brute controlee
 
-Etat vérifiable fourni par le moteur :
+Etat verifiable fourni par le moteur :
 
 - tick courant ;
 - phase de spawn ou non ;
 - joueur courant ;
 - or ;
 - troupes ;
-- tuiles possédées ;
-- attaques entrantes/sortantes ;
-- alliés ;
+- tuiles possedees ;
+- attaques entrantes ou sortantes ;
+- allies ;
 - cibles ;
-- unités et structures ;
+- unites et structures ;
 - voisins ;
-- updates récentes.
+- updates recentes.
 
-Cette couche doit rester proche du moteur pour être auditable.
+Cette couche doit rester proche du moteur pour etre auditable.
 
-### 2. Observation dérivée
+### 2. Observation derivee
 
-Résumés calculés par l'adapter :
+Resumes calcules par l'adapter :
 
-- réserve de troupes disponible ;
-- pression défensive par front ;
-- meilleur front d'expansion ;
-- meilleure cible attaquable ;
+- reserve de troupes disponible ;
+- pression defensive par front ;
+- meilleurs angles d'expansion ;
+- cibles reelles selon chaque vecteur ;
 - structures manquantes ;
-- zones côtières utiles ;
-- structures exposées ;
-- fronts non défendus ;
-- niveau de danger nucléaire ;
-- opportunités d'assistance à un allié.
+- zones cotieres utiles ;
+- structures exposees ;
+- fronts non defendus ;
+- niveau de danger nucleaire ;
+- opportunites d'assistance a un allie.
 
-Cette couche est celle qui aide réellement les modèles généralistes.
+Cette couche ne doit pas choisir a la place du modele. Elle doit rendre le jeu lisible.
 
-### 3. Mémoire courte
+### 3. Memoire courte
 
 Historique glissant des `N` derniers ticks :
 
-- actions émises ;
-- résultat des actions ;
+- actions emises ;
+- resultat des actions ;
 - changements de voisins ;
-- conquêtes/pertes importantes ;
+- conquetes ou pertes importantes ;
 - nouvelles menaces ;
 - messages diplomatiques utiles.
 
 Recommandation :
 
-- garder une mémoire courte de `5` à `20` ticks ;
-- ne pas réinjecter toute l'histoire ;
-- résumer les événements répétitifs.
+- garder une memoire courte de `5` a `20` ticks ;
+- ne pas reinjecter toute l'histoire ;
+- resumer les evenements repetitifs.
 
-## Principe de visibilité
+## Principe de visibilite
 
-Deux modes doivent être supportés explicitement :
+Deux modes doivent etre supportes explicitement :
 
 - `full_information`
 - `player_information`
 
-Le mode choisi doit être indiqué dans l'observation. Il ne faut pas mélanger les deux implicitement.
+Le mode choisi doit etre indique dans l'observation. Il ne faut pas melanger les deux implicitement.
 
-## Contrat d'observation recommandé
+## Contrat d'observation recommande
 
 ```json
 {
@@ -142,13 +161,13 @@ Pour chaque voisin :
 
 - identifiant ;
 - type de relation ;
-- atteignable par terre ou mer ;
-- puissance estimée ;
+- atteignable par terre ou par mer ;
+- puissance estimee ;
 - nombre de tuiles ;
-- structures clés détectées ;
-- pression reçue d'autres joueurs ;
-- niveau de vulnérabilité.
-- dernier tick de visibilité si fog of war actif.
+- structures cles detectees ;
+- pression recue d'autres joueurs ;
+- niveau de vulnerabilite ;
+- dernier tick de visibilite si fog of war actif.
 
 ### `fronts`
 
@@ -161,10 +180,10 @@ Par front :
 - largeur approximative ;
 - pression amie ;
 - pression ennemie ;
-- tuiles/frontières clés ;
+- tuiles ou frontieres cles ;
 - statut : `safe`, `contested`, `critical`, `opportunity`
 
-Chaque front devrait aussi idéalement contenir un `front_id` stable sur quelques ticks pour faciliter la mémoire et les logs.
+Chaque front devrait idealement contenir un `front_id` stable sur quelques ticks pour faciliter la memoire et les logs.
 
 ### `opportunities`
 
@@ -177,7 +196,7 @@ Exemples :
 - `build_city_for_growth`
 - `build_sam_cover`
 
-Chaque opportunité peut être reliée à une ou plusieurs actions valides.
+Chaque opportunite peut etre reliee a une ou plusieurs actions valides.
 
 ### `threats`
 
@@ -191,40 +210,40 @@ Exemples :
 
 Chaque menace peut inclure :
 
-- une sévérité ;
+- une severite ;
 - un horizon temporel ;
-- un front concerné ;
-- une recommandation de réponse.
+- un front concerne ;
+- un contexte de reponse plausible.
 
 ### `recent_events`
 
-Cette section doit résumer les événements les plus utiles pour la décision :
+Cette section doit resumer les evenements les plus utiles pour la decision :
 
 - attaque entrante ;
-- front perdu/gagné ;
-- structure détruite ou construite ;
-- alliance acceptée/refusée ;
-- nouvelle cible détectée ;
-- opportunité navale ouverte.
+- front perdu ou gagne ;
+- structure detruite ou construite ;
+- alliance acceptee ou refusee ;
+- nouvelle cible detectee ;
+- opportunite navale ouverte.
 
 ### `strategic_summary`
 
-Courte liste textuelle générée automatiquement pour aider les modèles moins bons sur les structures JSON complexes.
+Courte liste textuelle generee automatiquement pour aider les modeles moins bons sur les structures JSON complexes.
 
 Exemple :
 
 - `Main threat: red_player on north-west land front`
 - `Best opportunity: 14 neutral border tiles on east corridor`
-- `No port built while 2 naval targets are reachable`
+- `Coastal flank on south side is stronger than direct north push`
 
-## Règle importante
+## Regle importante
 
-Le modèle ne doit jamais déduire lui-même si une action est légalement faisable.
+Le modele ne doit jamais deduire lui-meme si une action est legalement faisable.
 
 L'observation doit inclure :
 
 - des actions valides ;
-- ou au minimum des cibles/actions annotées `reachable`, `buildable`, `legal`.
+- ou au minimum des cibles ou actions annotees `reachable`, `buildable`, `legal`.
 
 Sans cela, il hallucine des actions impossibles.
 
@@ -233,9 +252,11 @@ Sans cela, il hallucine des actions impossibles.
 La vraie cible n'est pas seulement `valid_actions`, mais :
 
 - `valid_actions` avec identifiants stables ;
-- regroupement par catégorie ;
-- score/priorité éventuelle ;
-- explication machine-friendly.
+- regroupement par categorie ;
+- metadonnees d'explication ;
+- contexte de trade-off lisible.
+
+Les hints de score sont autorises comme aides de lecture, mais ne doivent pas devenir un pilote automatique cache.
 
 Exemple :
 
@@ -245,6 +266,7 @@ Exemple :
   "type": "build_structure",
   "label": "Build Port on south coast",
   "legal": true,
-  "priority_hint": 0.78
+  "importance_hint": 0.78,
+  "why_it_exists": "South coastal flank opens a second front with low initial resistance."
 }
 ```

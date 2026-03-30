@@ -1,97 +1,91 @@
-# Game Mechanics à Expliquer aux Bots
+# Game Mechanics
 
-## Boucle du jeu
+## Objectif
 
-OpenFront fonctionne par ticks.
+Poser un resume mecanique clair pour les bots, sans y glisser de doctrine strategique deguisee.
 
-A chaque tick, un bot doit raisonner sur :
+## Territoire et frontieres
 
-- son état courant ;
-- les updates récentes ;
-- les actions déjà en cours ;
-- ses voisins ;
-- ses ressources ;
-- ses objectifs.
+- Un joueur possede des tuiles.
+- Les frontieres definissent l'adjacence terrestre.
+- Une attaque terrestre n'a de sens que contre une cible atteignable par voie terrestre.
+- Certaines expansions se font contre `Terra Nullius` plutot que contre un joueur.
 
-## Concepts que le bot doit comprendre
+## Troupes
 
-### Territoire
+- Les troupes servent a attaquer et a defendre.
+- Le bot ne doit pas raisonner comme si toute reserve devait toujours etre preservee au maximum.
+- Une attaque doit etre evaluee en tenant compte du risque de contre-attaque, du tempo et du gain attendu.
 
-- Un joueur possède des tuiles.
-- Les frontières définissent ce qui est adjacent ou non.
-- Une attaque terrestre n'a de sens que contre un voisin partageant une frontière.
-- Certaines expansions se font contre `Terra Nullius` plutôt que contre un joueur.
+## Types de voisins
 
-### Troupes
-
-- Les troupes servent à attaquer et à défendre.
-- Le bot ne doit pas vider totalement sa réserve.
-- Une attaque doit être pensée avec une réserve minimale restante.
-
-### Types de voisins
-
-- `land_neighbor` : voisin atteignable par frontière terrestre
-- `naval_neighbor` : voisin non adjacent par terre mais potentiellement atteignable par mer
-- `friendly_neighbor` : allié ou même équipe
+- `land_neighbor` : voisin atteignable par voie terrestre
+- `naval_neighbor` : voisin atteignable par projection navale, qu'il soit ou non deja joignable par terre
+- `friendly_neighbor` : allie ou meme equipe
 - `hostile_neighbor` : cible potentielle
 
-### Structures
+Le terme `naval_neighbor` ne doit pas vouloir dire "uniquement joignable par mer". Il decrit un vecteur de projection naval pertinent.
 
-Le moteur valorise déjà plusieurs bâtiments, qu'il faut rendre explicites au bot :
+## Structures
 
-- `City` : croissance/capacité
-- `Factory` : économie/logistique
+Le moteur valorise deja plusieurs batiments, qu'il faut rendre explicites au bot :
+
+- `City` : croissance ou capacite
+- `Factory` : economie ou logistique
 - `Port` : projection navale et commerce
-- `Defense Post` : défense de front
+- `Defense Post` : defense de front
 - `SAM Launcher` : couverture anti-missile
-- `Missile Silo` : projection nucléaire
+- `Missile Silo` : projection nucleaire
 
 Le bot doit savoir :
 
-- combien il en possède ;
+- combien il en possede ;
 - lesquels sont absents ;
 - lesquels sont en construction ;
-- lesquels sont exposés ;
-- où ils seraient utiles.
+- lesquels sont exposes ;
+- ou ils seraient utiles.
 
-### Diplomatie
+## Diplomatie
 
 - Alliances
 - Equipes
 - Embargos
-- Cibles désignées
+- Cibles designees
 - Trahisons
 
 Le bot doit distinguer :
 
-- ennemi réel ;
-- allié ;
-- cible alliée d'un autre allié ;
-- joueur hostile mais non atteignable immédiatement.
+- ennemi reel ;
+- allie ;
+- cible alliee d'un autre allie ;
+- joueur hostile non encore engage.
 
-### Naval
+## Naval
 
-Le moteur gère des transports navals. Il faut donc indiquer clairement :
+Le moteur gere des transports navals. Il faut donc indiquer clairement :
 
-- si une cible est atteignable par terre ou uniquement par mer ;
-- depuis quelles zones côtières un transport est raisonnable ;
-- quels fronts côtiers sont disponibles.
+- si une cible est atteignable par terre ;
+- si une projection navale est disponible ;
+- depuis quelles zones cotieres un transport est raisonnable ;
+- quels fronts cotiers sont disponibles ;
+- quelle valeur strategique a un angle naval par rapport a la voie terrestre.
 
-### Nucléaire et anti-nucléaire
+Le naval ne doit pas etre presente comme une simple solution de secours quand la terre est impossible. C'est un vecteur d'attaque a part entiere.
 
-Si ces mécaniques sont activées, le bot doit recevoir :
+## Nucleaire et anti-nucleaire
 
-- l'état des silos ;
+Si ces mecaniques sont actives, le bot doit recevoir :
+
+- l'etat des silos ;
 - la couverture SAM ;
-- le niveau de risque nucléaire ;
-- la liste des cibles stratégiques adverses.
+- le niveau de risque nucleaire ;
+- la liste des cibles strategiques adverses.
 
-## Erreurs classiques à éviter
+## Erreurs classiques a eviter
 
-- attaquer un joueur qui n'est pas voisin ;
-- lancer une attaque terrestre sans frontière commune ;
-- ignorer une attaque entrante majeure ;
+- attaquer un joueur non atteignable par le vecteur choisi ;
+- lancer une attaque terrestre sans acces terrestre ;
+- sous-estimer une menace entrante majeure ;
 - construire au hasard sans logique de front ou de couverture ;
-- lancer une expansion alors qu'une menace immédiate est en cours ;
-- ignorer l'intérêt d'un port sur une carte maritime ;
-- ignorer l'état de ses propres structures.
+- ignorer un angle naval fort sous pretexte qu'une frontiere terrestre existe aussi ;
+- confondre "heuristique souvent utile" et "regle dure du jeu".

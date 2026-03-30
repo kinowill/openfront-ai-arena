@@ -7,22 +7,35 @@ Donner aux bots une lecture exploitable de la diplomatie OpenFront.
 Dans OpenFront, la diplomatie modifie directement :
 
 - les cibles valides ;
-- les fronts prioritaires ;
+- la geometrie des fronts ;
 - la survie ;
-- les fenêtres d'attaque ;
-- la qualité du late game.
+- les fenetres d'attaque ;
+- la qualite du late game.
 
-## Ce qu'un bot doit distinguer
+## Principe
 
-- allié actuel ;
-- coéquipier ;
+La diplomatie ne doit pas etre reduite a des regles fixes.
+
+Il faut donner a l'agent :
+
+- l'etat diplomatique reel ;
+- les demandes et signaux utiles ;
+- les effets mecaniques sur les cibles et les fronts ;
+- les informations de contexte qui permettent d'evaluer si cooperer, temporiser ou trahir est bon.
+
+Le choix reste strategique.
+
+## Ce qu'un agent doit distinguer
+
+- allie actuel ;
+- coequipier ;
 - neutre ;
 - hostile ;
-- allié fragile ;
-- allié opportuniste ;
-- traître probable ;
-- joueur ciblé par un allié ;
-- joueur déjà sous pression d'autres adversaires.
+- allie fragile ;
+- allie opportuniste ;
+- traitre probable ;
+- joueur cible par un allie ;
+- joueur deja sous pression d'autres adversaires.
 
 ## Principes de base
 
@@ -30,133 +43,135 @@ Dans OpenFront, la diplomatie modifie directement :
 
 Bonne alliance :
 
-- réduit un front dangereux ;
+- reduit un front dangereux ;
 - permet de survivre ;
-- crée un focus commun ;
-- ouvre une opportunité de capture d'un tiers.
+- cree un focus commun ;
+- ouvre une opportunite de capture d'un tiers.
 
 Mauvaise alliance :
 
-- n'apporte aucune sécurité ;
-- protège un futur rival sans contrepartie ;
+- n'apporte aucune securite ;
+- protege un futur rival sans contrepartie ;
 - ralentit ton tempo ;
 - t'enferme pendant qu'un autre snowball.
 
 ### Une alliance change la topologie du match
 
-Une fois une alliance formée :
+Une fois une alliance formee :
 
-- un front peut disparaître ;
+- un front peut disparaitre ;
 - une cible peut devenir interdite ;
 - une route de croissance peut s'ouvrir ;
-- un autre voisin devient soudain prioritaire.
+- un autre voisin peut devenir plus important.
 
-Le bot doit réévaluer sa stratégie après chaque événement diplomatique.
+L'agent doit donc pouvoir reevaluer sa strategie apres chaque evenement diplomatique.
 
-## Cas diplomatiques à documenter
+## Cas diplomatiques a documenter
 
 ### Accepter une alliance
 
 Signaux favorables :
 
-- voisin immédiat dangereux ;
+- voisin immediat dangereux ;
 - encerclement potentiel ;
 - cible tierce plus importante ;
-- besoin de respirer économiquement ;
-- allié capable d'agir réellement.
+- besoin de respirer economiquement ;
+- allie capable d'agir reellement.
 
-Signaux défavorables :
+Signaux defavorables :
 
-- l'autre joueur n'a aucune menace réelle ;
-- il devient trop fort une fois protégé ;
+- l'autre joueur n'a aucune menace reelle ;
+- il devient trop fort une fois protege ;
 - tu perds ta meilleure cible ;
-- le front qu'il ferme est déjà faible.
+- le front qu'il ferme est deja faible.
 
 ### Refuser une alliance
 
-À privilégier si :
+A privilegier si :
 
-- l'alliance t'empêche un kill proche ;
-- le joueur est trop bien placé pour snowball ;
-- tu n'as rien à y gagner ;
-- une autre cible est déjà alignée avec ton plan.
+- l'alliance t'empeche un kill proche ;
+- le joueur est trop bien place pour snowball ;
+- tu n'as rien a y gagner ;
+- une autre cible est deja alignee avec ton plan.
 
 ### Renouveler une alliance
 
 Bon choix si :
 
-- l'équilibre de fronts l'exige encore ;
-- l'allié reste utile ;
-- un ennemi majeur reste à gérer ;
-- la rupture serait plus coûteuse que le maintien.
+- l'equilibre des fronts l'exige encore ;
+- l'allie reste utile ;
+- un ennemi majeur reste a gerer ;
+- la rupture serait plus couteuse que le maintien.
 
 Mauvais choix si :
 
-- l'allié est devenu la prochaine cible naturelle ;
+- l'allie est devenu la prochaine cible naturelle ;
 - l'alliance fige le jeu en sa faveur ;
-- ton meilleur timing dépend justement de sa fin.
+- ton meilleur timing depend justement de sa fin.
 
 ### Marquer une cible
 
 Utile pour :
 
 - coordonner un focus ;
-- signaler une priorité ;
-- pousser un allié à agir ;
+- signaler un angle commun ;
+- pousser un allie a agir ;
 - structurer un front commun.
 
 ### Donner or ou troupes
 
-À faire si :
+A faire si :
 
-- un allié tient un front critique ;
-- l'aide a un impact immédiat ;
+- un allie tient un front critique ;
+- l'aide a un impact immediat ;
 - ton propre front est stable ;
-- la donation évite une percée majeure.
+- la donation evite une percee majeure.
 
-À éviter si :
+A eviter si :
 
-- l'allié va perdre quand même ;
+- l'allie va perdre quand meme ;
 - tu t'affaiblis plus que tu ne l'aides ;
-- aucun gain de tempo réel n'en découle.
+- aucun gain de tempo reel n'en decoule.
 
 ## Trahison
 
-La trahison doit être un calcul.
+La trahison doit etre un calcul.
 
 ### Conditions favorables
 
 - la rupture ouvre un kill rapide ;
-- l'allié est isolé ou déjà affaibli ;
-- tu peux convertir immédiatement en avantage territorial ;
-- le coût diplomatique est supportable.
+- l'allie est isole ou deja affaibli ;
+- tu peux convertir immediatement en avantage territorial ;
+- le cout diplomatique est supportable.
 
-### Conditions défavorables
+### Conditions defavorables
 
-- aucun follow-up immédiat ;
+- aucun follow-up immediat ;
 - autre front dangereux encore actif ;
-- armée insuffisante ;
+- armee insuffisante ;
 - autre joueur profite plus de la rupture que toi.
 
 ## Signaux faibles
 
-Un bot peut inférer des indices de risque diplomatique :
+Un agent peut inferer des indices de risque diplomatique :
 
-- alliance demandée en l'absence de menace ;
+- alliance demandee en l'absence de menace ;
 - refus d'alliance alors qu'un front commun existe ;
 - absence d'assistance promise ;
-- marquage de cible incohérent ;
-- concentration anormale de troupes près de ta frontière.
+- marquage de cible incoherent ;
+- concentration anormale de troupes pres de ta frontiere.
 
 ## Heuristiques exploitables
 
 - accepter une alliance qui retire un front critique est souvent bon ;
-- aider un allié qui combat déjà est plus rentable qu'aider un allié passif ;
-- un allié sans ennemi proche peut devenir un problème plus tard ;
-- un traître doit être puni vite si la fenêtre existe ;
-- la diplomatie doit toujours être relue avec la géographie.
+- aider un allie qui combat deja est plus rentable qu'aider un allie passif ;
+- un allie sans ennemi proche peut devenir un probleme plus tard ;
+- un traitre doit etre puni vite si la fenetre existe ;
+- la diplomatie doit toujours etre relue avec la geographie.
 
-## Champs recommandés dans l'observation
+Ces heuristiques restent des aides de lecture, pas des ordres.
+
+## Champs recommandes dans l'observation
 
 - `alliances_current`
 - `alliance_requests_incoming`

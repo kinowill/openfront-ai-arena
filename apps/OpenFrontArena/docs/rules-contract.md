@@ -2,26 +2,56 @@
 
 ## Objectif
 
-Versionner explicitement les règles injectées aux bots pour éviter les ambiguïtés et les régressions.
+Versionner explicitement les regles injectees aux bots pour eviter les ambiguites et les regressions.
 
 ## Principe
 
-Le moteur possède la vraie logique.
+Le moteur possede la vraie logique.
 
-Le `Rules Contract` n'est pas une duplication exhaustive du code, mais un résumé normatif des mécaniques pertinentes pour la décision.
+Le `Rules Contract` n'est pas une doctrine strategique. C'est un resume normatif des mecanismes utiles a la decision.
+
+Il doit decrire :
+
+- ce qui est vrai ;
+- ce qui est legal ;
+- ce qui est atteignable ;
+- ce qui est observable ;
+- ce qui est impossible.
+
+Il ne doit pas imposer :
+
+- un ordre de priorite strategique ;
+- un style de jeu ;
+- une suite de decision obligatoire ;
+- une heuristique locale presentee comme une loi du jeu.
 
 ## Contenu minimal
 
 - conditions de victoire ;
-- phases de jeu ;
-- règles d'expansion ;
-- règles d'attaque terrestre ;
-- règles d'attaque navale ;
-- règles de construction ;
-- règles de don/alliance ;
-- limitations/cooldowns importants ;
-- règles nucléaires si activées ;
-- visibilité/fog of war si activé.
+- phases de jeu si elles ont un effet mecanique reel ;
+- regles d'expansion ;
+- regles d'attaque terrestre ;
+- regles d'attaque navale ;
+- regles de construction ;
+- regles de don/alliance ;
+- limitations ou cooldowns importants ;
+- regles nucleaires si activees ;
+- visibilite ou fog of war si actives.
+
+## Frontiere avec les heuristiques
+
+Le contrat de regles dit par exemple :
+
+- qu'une attaque terrestre exige une cible atteignable par terre ;
+- qu'une action navale exige un acces cotier et une projection navale valide ;
+- qu'une construction exige une tuile buildable et un cout payable.
+
+Les documents heuristiques disent ensuite :
+
+- quand il est intelligent de construire ;
+- quand il vaut mieux temporiser ;
+- quand le naval est probablement meilleur ;
+- quand aider un allie a plus de valeur qu'attaquer.
 
 ## Versionnement
 
@@ -29,18 +59,18 @@ Chaque observation doit indiquer :
 
 - `rules_version`
 
-Chaque changement important de logique exposée aux bots doit incrémenter cette version.
+Chaque changement important de logique exposee aux bots doit incrementer cette version.
 
 ## Utilisation
 
-Le `Rules Contract` peut être :
+Le `Rules Contract` peut etre :
 
-- injecté au prompt système ;
-- exposé comme document annexe pour les agents non LLM ;
-- stocké avec les replays et les matchs.
+- injecte au prompt systeme ;
+- expose comme document annexe pour les agents non LLM ;
+- stocke avec les replays et les matchs.
 
-## Règle pratique
+## Regle pratique
 
-Si une mécanique devient importante pour les décisions et qu'elle n'est pas dans ce contrat, il faut l'ajouter.
+Si une mecanique devient importante pour les decisions et qu'elle n'est pas dans ce contrat, il faut l'ajouter.
 
-Sinon les bots vont apprendre des implicites fragiles.
+Si un conseil strategique est presente comme une regle dure, il faut le sortir du contrat.

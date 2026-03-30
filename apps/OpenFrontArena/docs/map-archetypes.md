@@ -2,43 +2,55 @@
 
 ## Objectif
 
-Aider les bots à relier leurs décisions à la géographie de la carte.
+Aider les bots a relier leurs decisions a la geographie de la carte.
 
-## Archétypes principaux
+## Principe
+
+La carte doit orienter la lecture du match, pas enfermer le bot dans un playbook fixe.
+
+Un archetype sert a repondre a des questions comme :
+
+- quels vecteurs d'action comptent vraiment ;
+- combien de fronts vont emerger ;
+- quelle valeur relative a le naval ;
+- quelle vitesse de contact attendre ;
+- quels investissements deviennent plausibles.
+
+## Archetypes principaux
 
 ### Continental / Open Land
 
 - expansion terrestre importante ;
 - nombreux fronts potentiels ;
-- importance du tempo et de la densité.
+- importance du tempo et de la densite.
 
 ### Regional / Mixed
 
 - plusieurs fronts ;
-- géographie plus structurée ;
-- parfois quelques côtes décisives.
+- geographie plus structuree ;
+- parfois quelques cotes decisives.
 
 ### Island / Maritime
 
-- mobilité navale critique ;
-- clusters séparés ;
+- mobilite navale critique ;
+- clusters separes ;
 - risque de sous-jouer le naval.
 
 ### Chokepoint
 
-- passages limités ;
-- fronts très concentrés ;
-- valeur forte des positions défensives.
+- passages limites ;
+- fronts tres concentres ;
+- valeur forte des positions defensives.
 
 ### Split Landmass
 
-- plusieurs masses terrestres séparées par eau ;
-- guerre terrestre locale + opportunités navales globales.
+- plusieurs masses terrestres separees par eau ;
+- guerre terrestre locale plus opportunites navales globales.
 
-## Ce qu'un bot doit inférer
+## Ce qu'un agent doit pouvoir inferer
 
-- taux de côte utile ;
-- densité de neutre ;
+- taux de cote utile ;
+- densite de neutre ;
 - nombre de fronts probables ;
 - valeur attendue du naval ;
 - importance des goulets ;

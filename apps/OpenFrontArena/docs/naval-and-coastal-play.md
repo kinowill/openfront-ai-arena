@@ -2,88 +2,111 @@
 
 ## Objectif
 
-Donner aux bots une vraie compréhension du jeu côtier et naval.
+Donner aux bots une vraie comprehension du jeu cotier et naval.
 
-Sur certaines cartes, le naval transforme entièrement la structure stratégique de la partie.
+Sur certaines cartes, le naval transforme entierement la structure strategique de la partie.
 
 ## Ce qu'un bot doit comprendre
 
-- la différence entre cible terrestre et cible navale ;
-- la valeur d'une côte sûre ;
-- le coût d'un port ;
-- l'intérêt d'un débarquement ;
-- la possibilité de contourner un front ;
+- la difference entre legalite mecanique et preference strategique ;
+- la difference entre attaque terrestre et projection navale ;
+- la valeur d'une cote sure ;
+- le cout d'un port ;
+- l'interet d'un debarquement ;
+- la possibilite de contourner un front ;
 - le risque d'ouvrir un investissement sans suite.
+
+## Point cle
+
+Une action navale n'est pas reservee aux cibles impossibles a atteindre par terre.
+
+Le naval peut etre meilleur que la terre si :
+
+- l'angle d'attaque est plus faible ;
+- le front terrestre est sature ;
+- un second front change la repartition adverse ;
+- une tete de pont cree plus de tempo ;
+- l'arriere ennemi est plus vulnerable depuis la cote.
 
 ## Quand le naval est important
 
 - cartes insulaires ;
 - cartes multi-continents ;
-- cartes à détroits et clusters séparés ;
-- lignes terrestres bloquées ;
-- ennemi faible hors portée terrestre.
+- cartes a detroits et clusters separes ;
+- lignes terrestres bloquees ;
+- besoin de contourner un front dense ;
+- cote faible ou arriere expose ;
+- ennemi faible hors bonne portee terrestre.
 
 ## Quand le naval est secondaire
 
-- carte presque entièrement terrestre ;
-- énormes fronts terrestres actifs ;
+- carte presque entierement terrestre ;
+- enormes fronts terrestres actifs avec meilleur rendement immediat ;
 - absence de cible maritime exploitable ;
-- début de partie sous forte pression locale.
+- debut de partie sous forte pression locale ;
+- cout d'infrastructure naval sans suite credible.
 
 ## Types d'usage naval
 
 ### Expansion indirecte
 
-Atteindre des zones non accessibles par terre.
+Atteindre des zones non accessibles ou mal accessibles par terre.
 
 ### Contournement
 
-Éviter un front terrestre dense.
+Eviter un front terrestre dense.
 
-### Harcèlement
+### Harcelement
 
-Forcer l'adversaire à défendre un arrière ou une île.
+Forcer l'adversaire a defendre un arriere ou une ile.
 
-### Projection décisive
+### Projection decisive
 
-Ouvrir une vraie tête de pont permettant une capture.
+Ouvrir une vraie tete de pont permettant une capture.
 
-## Mauvais usages fréquents
+### Second front
 
-- construire un port trop tôt sans cible ;
-- débarquer trop peu de troupes ;
-- négliger sa propre frontière terrestre ;
-- répéter des transports vers une cible trop forte ;
-- lancer du naval alors que Terra Nullius reste largement disponible.
+Creer une tension supplementaire meme contre une cible deja joignable par terre.
 
-## Signaux favorables à un plan naval
+## Mauvais usages frequents
 
-- `no_land_path_to_target`
+- construire un port trop tot sans cible ;
+- debarquer trop peu de troupes ;
+- negliger sa propre frontiere terrestre ;
+- repeter des transports vers une cible trop forte ;
+- lancer du naval alors que le terrestre a un meilleur rendement clair ;
+- traiter le naval comme une doctrine automatique.
+
+## Signaux favorables a un plan naval
+
 - `reachable_coastal_target_exists`
 - `coastal_border_tiles_available`
 - `enemy_rear_is_exposed`
 - `land_front_stalemate`
+- `naval_angle_better_than_land`
+- `second_front_has_high_value`
 
-## Signaux défavorables
+## Signaux defavorables
 
 - `urgent_land_threat`
 - `no_safe_coast`
 - `target_stronger_than_me`
 - `no_follow_up_after_landing`
+- `land_option_clearly_better`
 
 ## Heuristiques bot
 
-- construire un port si au moins une opportunité navale crédible existe ;
-- préférer un plan naval pour contourner plutôt que forcer un front saturé ;
-- éviter le naval "par principe" si l'expansion terrestre reste meilleure ;
-- considérer le naval comme une option de géographie, pas comme une doctrine fixe.
+- construire un port si au moins une opportunite navale credible existe ;
+- preferer un plan naval pour contourner plutot que forcer un front sature ;
+- eviter le naval "par principe" si l'expansion terrestre reste meilleure ;
+- considerer le naval comme une option de geographie et de tempo, pas comme une doctrine fixe.
 
 ## Observation utile
 
 - `coastal_border_tiles_count`
 - `safe_coastal_regions`
 - `naval_targets`
-- `land_blocked_targets`
 - `best_port_candidates`
 - `naval_opportunities`
 - `naval_risk_estimate`
+- `land_vs_naval_tradeoff`

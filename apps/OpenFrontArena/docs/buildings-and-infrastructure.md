@@ -2,50 +2,52 @@
 
 ## Objectif
 
-Donner aux bots une lecture stratégique des structures d'OpenFront, pas seulement leur nom.
+Donner aux bots une lecture strategique des structures d'OpenFront, pas seulement leur nom.
 
 ## Principe
 
 Une structure n'est pas seulement "buildable".
-Elle doit être comprise comme :
+Elle doit etre comprise comme :
 
 - un investissement ;
-- un signal stratégique ;
+- un signal strategique ;
 - un levier de tempo ;
 - un point faible potentiel.
 
+Les indications de ce document sont des heuristiques. Elles ne remplacent pas la legalite moteur ni la lecture du contexte.
+
 ## City
 
-### Rôle
+### Role
 
 - croissance ;
-- capacité ;
-- ancrage économique de base.
+- capacite ;
+- ancrage economique de base.
 
 ### Quand c'est fort
 
-- quand tu contrôles déjà un espace relativement sûr ;
-- quand tu peux convertir ce développement en réserve de troupes ;
+- quand tu controles deja un espace relativement sur ;
+- quand tu peux convertir ce developpement en reserve de troupes ;
 - quand ta croissance stagne faute d'infrastructure.
 
 ### Quand c'est mauvais
 
-- en front ultra exposé ;
+- en front ultra expose ;
 - si tu meurs avant d'amortir l'investissement ;
-- si une menace immédiate exige défense ou contre-attaque.
+- si une menace immediate exige defense ou contre-attaque.
 
 ### Heuristiques bot
 
-- préférer une zone intérieure plutôt qu'une bordure chaude ;
-- éviter de construire si un front critique manque de défense ;
-- augmenter la priorité si le bot a beaucoup de territoire mais peu d'infrastructure.
+- preferer une zone interieure plutot qu'une bordure chaude ;
+- eviter de construire si un front critique manque de defense ;
+- reevaluer a la hausse si le territoire est large mais sous-infrastructure.
 
 ## Factory
 
-### Rôle
+### Role
 
-- moteur économique et logistique ;
-- meilleure valorisation de zones bien connectées ;
+- moteur economique et logistique ;
+- meilleure valorisation de zones bien connectees ;
 - structure qui profite d'un environnement relativement stable.
 
 ### Ce que montre le code
@@ -53,190 +55,184 @@ Elle doit être comprise comme :
 Le moteur natif valorise fortement :
 
 - l'altitude ;
-- la distance à la frontière ;
+- la distance a la frontiere ;
 - l'espacement ;
-- la connectivité ferroviaire ;
-- la proximité utile avec d'autres structures.
+- la connectivite ferroviaire ;
+- la proximite utile avec d'autres structures.
 
 ### Quand c'est fort
 
-- à l'arrière ou dans un coeur économique ;
-- quand le réseau de structures existe déjà ;
-- quand tu peux protéger l'investissement.
+- a l'arriere ou dans un coeur economique ;
+- quand le reseau de structures existe deja ;
+- quand tu peux proteger l'investissement.
 
 ### Quand c'est mauvais
 
-- en tout début de partie sur une carte très agressive ;
-- si la côte est plus urgente qu'une deuxième structure économique ;
+- en tout debut de partie sur une carte tres agressive ;
+- si la cote est plus urgente qu'une deuxieme structure economique ;
 - si le front bouge trop vite.
 
 ### Heuristiques bot
 
-- prioriser si la partie se stabilise ;
-- prioriser si plusieurs villes/structures sont déjà présentes ;
-- déprioriser sur cartes très maritimes tant qu'aucun port n'existe.
+- monter sa valeur si la partie se stabilise ;
+- monter sa valeur si plusieurs villes ou structures sont deja presentes ;
+- baisser sa valeur sur cartes tres maritimes tant qu'aucun port n'existe.
 
 ## Port
 
-### Rôle
+### Role
 
-- accès naval ;
-- mobilité ;
+- acces naval ;
+- mobilite ;
 - commerce ;
-- ouverture de fronts impossibles par terre.
+- ouverture de fronts impossibles ou moins bons par terre.
 
 ### Quand c'est critique
 
 - carte insulaire ou semi-insulaire ;
-- ennemi faible accessible seulement par mer ;
-- opportunité de contourner une ligne terrestre ;
-- besoin de projection sur un autre cluster.
+- opportunite de contourner une ligne terrestre ;
+- besoin de projection sur un autre cluster ;
+- angle cotier plus fort qu'un push terrestre ;
+- creation d'un second front utile.
 
 ### Quand c'est secondaire
 
-- carte presque entièrement terrestre ;
-- aucune opportunité navale crédible ;
-- front terrestre urgent.
+- carte presque entierement terrestre ;
+- aucune opportunite navale credible ;
+- front terrestre urgent avec meilleur rendement immediat.
 
 ### Heuristiques bot
 
-- augmenter fortement la priorité si un ennemi faible est atteignable seulement via la côte ;
-- augmenter la priorité si plusieurs tuiles côtières sûres existent ;
-- diminuer la priorité si aucune suite navale n'est disponible.
+- monter fortement sa valeur si une projection navale promet un meilleur angle ;
+- monter sa valeur si plusieurs tuiles cotieres sures existent ;
+- baisser sa valeur si aucune suite navale n'est disponible.
 
 ## Defense Post
 
-### Rôle
+### Role
 
 - durcissement local ;
-- ralentissement ou sécurisation d'un front ;
-- réponse à un voisin plus fort.
+- ralentissement ou securisation d'un front ;
+- reponse a un voisin plus fort.
 
 ### Ce que montre le code
 
-Le moteur natif tend à le valoriser si :
+Le moteur natif tend a le valoriser si :
 
 - un voisin hostile non-bot est plus fort ;
-- la zone est proche de la frontière ;
+- la zone est proche de la frontiere ;
 - l'altitude est bonne ;
 - le placement couvre un front pertinent.
 
 ### Quand c'est fort
 
-- frontière chaude ;
+- frontiere chaude ;
 - ennemi plus riche ou plus massif ;
-- goulet/chokepoint ;
+- goulet ou chokepoint ;
 - phase de stabilisation.
 
 ### Quand c'est faible
 
-- zone intérieure ;
-- front déjà gagné ;
-- si tu dois encore d'abord prendre de l'espace ou de l'éco.
+- zone interieure ;
+- front deja gagne ;
+- si tu dois encore d'abord prendre de l'espace ou de l'eco.
 
 ### Heuristiques bot
 
-- construire si un front est `critical` ou `contested` contre un voisin supérieur ;
-- préférer points hauts et couloirs ;
-- éviter de spammer s'il n'y a pas de menace réelle.
+- construire si un front est `critical` ou `contested` contre un voisin superieur ;
+- preferer points hauts et couloirs ;
+- eviter de spammer s'il n'y a pas de menace reelle.
 
 ## SAM Launcher
 
-### Rôle
+### Role
 
 - couverture anti-missile ;
 - protection des structures critiques ;
-- assurance contre jeu nucléaire.
+- assurance contre jeu nucleaire.
 
 ### Quand c'est fort
 
-- présence de silos ennemis ;
-- milieu/fin de partie ;
-- cluster de villes/factories/silos à protéger ;
-- match où l'arsenal nucléaire est activé.
+- presence de silos ennemis ;
+- milieu ou fin de partie ;
+- cluster de villes, factories ou silos a proteger ;
+- match ou l'arsenal nucleaire est active.
 
 ### Quand c'est faible
 
-- arsenal nucléaire désactivé ;
-- début de partie sans menace lointaine ;
+- arsenal nucleaire desactive ;
+- debut de partie sans menace lointaine ;
 - zone vide sans actifs importants.
 
 ### Heuristiques bot
 
 - prioriser autour de `City`, `Factory`, `Port`, `Missile Silo` ;
-- augmenter la priorité si la menace nuke est non nulle ;
-- éviter construction trop tôt si les règles du match la rendent inutile.
+- reevaluer a la hausse si la menace nuke est non nulle ;
+- eviter une construction trop tot si les regles du match la rendent inutile.
 
 ## Missile Silo
 
-### Rôle
+### Role
 
-- menace stratégique ;
+- menace strategique ;
 - pression psychologique ;
-- capacité d'ouverture ou de punition.
+- capacite d'ouverture ou de punition.
 
 ### Ce que montre le code
 
-Le moteur natif tend à :
+Le moteur natif tend a :
 
 - limiter leur nombre ;
-- les placer loin de la frontière ;
-- préférer altitude et espacement ;
-- économiser l'or pour l'arsenal nucléaire si pertinent.
+- les placer loin de la frontiere ;
+- preferer altitude et espacement ;
+- economiser l'or pour l'arsenal nucleaire si pertinent.
 
 ### Quand c'est fort
 
 - partie longue ;
-- économie déjà solide ;
+- economie deja solide ;
 - couverture SAM possible ;
-- cibles stratégiques identifiées.
+- cibles strategiques identifiees.
 
 ### Quand c'est faible
 
-- économie fragile ;
+- economie fragile ;
 - aucune couverture ;
 - match court ou ultra-chaotique ;
-- impossibilité de protéger l'arrière.
+- impossibilite de proteger l'arriere.
 
 ### Heuristiques bot
 
-- ne pas construire si les bases économiques ne sont pas encore assez solides ;
-- prioriser uniquement si le contexte nucléaire existe réellement ;
-- éviter les placements de bordure.
+- ne pas construire si les bases economiques ne sont pas encore assez solides ;
+- ne l'envisager que si le contexte nucleaire existe reellement ;
+- eviter les placements de bordure.
 
-## Priorités par archétype de partie
+## Valeur relative par archetype
+
+Les archetypes ci-dessous donnent une lecture moyenne, pas un classement rigide.
 
 ### Partie terrestre rapide
 
-- City
-- Defense Post
-- Factory
-- Port
-- SAM
-- Silo
+- `City` et `Defense Post` montent souvent en valeur
+- `Factory` suit si la ligne se stabilise
+- `Port` reste secondaire sauf angle exceptionnel
 
 ### Partie maritime
 
-- Port
-- City
-- Factory
-- Defense Post
-- SAM
-- Silo
+- `Port` peut devenir structurant tres tot
+- `City` et `Factory` dependent de la securite de l'arriere
+- `Defense Post` reste utile sur les points d'entree
 
 ### Partie longue avec nukes
 
-- City
-- Factory
-- SAM
-- Silo
-- Defense Post
-- Port
+- `City` et `Factory` soutiennent la profondeur economique
+- `SAM` devient central
+- `Silo` n'a de valeur que si l'economie et la couverture suivent
 
-## Règle de synthèse pour bots
+## Regle de synthese pour bots
 
-Avant de construire, un bot devrait répondre à trois questions :
+Avant de construire, un bot devrait repondre a trois questions :
 
 1. quelle faiblesse cela corrige-t-il ?
-2. quel front ou quelle économie cela améliore-t-il ?
-3. est-ce meilleur maintenant qu'une expansion, une défense ou une attaque ?
+2. quel gain concret cela promet-il dans cette partie ?
+3. quelle autre action valide abandonne-t-on en faisant cet investissement ?

@@ -2,82 +2,87 @@
 
 ## Objectif
 
-Donner aux bots une lecture stratégique des mécaniques nucléaires et anti-nucléaires.
+Donner aux bots une lecture strategique des mecaniques nucleaires et anti-nucleaires.
 
 ## Principe
 
-Le jeu nucléaire affecte :
+Le jeu nucleaire affecte :
 
 - le positionnement ;
 - la valeur des structures ;
-- la protection de l'arrière ;
-- la priorité économique ;
-- la densité acceptable d'actifs.
+- la protection de l'arriere ;
+- l'economie de guerre ;
+- la densite acceptable d'actifs.
 
-## Ce qu'un bot doit comprendre
+Le but n'est pas d'imposer un script "si menace nuke alors SAM".
+Le but est d'exposer les informations qui permettent a l'agent de juger lui-meme quand la defense, l'economie ou la projection nucleaire valent le plus.
 
-- si les règles nucléaires sont activées ;
-- s'il existe une menace nucléaire crédible ;
-- quels actifs doivent être protégés ;
+## Ce qu'un agent doit comprendre
+
+- si les regles nucleaires sont activees ;
+- s'il existe une menace nucleaire credible ;
+- quels actifs doivent etre proteges ;
 - si construire un SAM est urgent ou non ;
 - quand un silo est rentable ;
-- quand l'adversaire est vulnérable au jeu stratégique.
+- quand l'adversaire est vulnerable au jeu strategique.
 
-## Lecture défensive
+## Lecture defensive
 
 ### Menace faible
 
-- début de partie ;
-- aucun silo identifié ;
-- économie adverse immature ;
-- règles désactivées ou coûts prohibitifs.
+- debut de partie ;
+- aucun silo identifie ;
+- economie adverse immature ;
+- regles desactivees ou couts prohibitifs.
 
-### Menace sérieuse
+### Menace serieuse
 
-- partie prolongée ;
+- partie prolongee ;
 - silos visibles ou probables ;
-- clusters de structures précieuses ;
-- fronts stabilisés ;
-- économie ennemie mature.
+- clusters de structures precieuses ;
+- fronts stabilises ;
+- economie ennemie mature.
 
 ## SAM Launcher
 
-À augmenter si :
+Monte en valeur si :
 
 - plusieurs structures denses existent ;
 - un silo ennemi existe ;
-- le bot joue lui-même nucléaire ;
-- l'arrière contient des villes/factories importantes.
+- l'agent joue lui-meme nucleaire ;
+- l'arriere contient des villes ou factories importantes.
 
-À baisser si :
+Baisse en valeur si :
 
-- la partie est encore très précoce ;
-- les nukes sont désactivées ;
-- rien de précieux n'est à protéger.
+- la partie est encore tres precoce ;
+- les nukes sont desactivees ;
+- rien de precieux n'est a proteger.
 
 ## Missile Silo
 
 Conditions favorables :
 
-- économie stable ;
+- economie stable ;
 - bonne profondeur territoriale ;
-- possibilité de protection ;
-- cibles stratégiques identifiées ;
+- possibilite de protection ;
+- cibles strategiques identifiees ;
 - temps de jeu restant suffisant.
 
-Conditions défavorables :
+Conditions defavorables :
 
 - front terrestre urgent ;
-- économie faible ;
-- silo exposé ;
-- aucun follow-up stratégique.
+- economie faible ;
+- silo expose ;
+- aucun follow-up strategique.
 
 ## Heuristiques bot
 
-- si `nuclear_threat_level` monte, la priorité SAM doit monter aussi ;
-- un silo sans plan de valeur n'est qu'un coût ;
-- protéger un cluster économique dense vaut souvent plus qu'étendre quelques tuiles ;
-- le nucléaire est plus fort quand les fronts terrestres se figent.
+- si `nuclear_threat_level` monte, la valeur du SAM monte souvent aussi ;
+- un silo sans plan de valeur n'est qu'un cout ;
+- proteger un cluster economique dense vaut souvent plus qu'etendre quelques tuiles ;
+- le nucleaire est plus fort quand les fronts terrestres se figent.
+
+Ces heuristiques ne remplacent pas le jugement strategique de l'agent.
 
 ## Champs d'observation utiles
 

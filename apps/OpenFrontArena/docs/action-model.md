@@ -2,161 +2,38 @@
 
 ## Objectif
 
-Limiter le bot à un ensemble d'actions explicites, validables et journalisables.
+Definir un contrat d'actions assez strict pour eviter les erreurs mecaniques, sans transformer la strategie en script rigide.
 
 ## Principe
 
-Le modèle ne renvoie pas des commandes UI.
+Le moteur doit fournir au bot un ensemble d'actions valides ou validables, avec assez de contexte pour comparer leurs trade-offs.
 
-Il choisit une action de haut niveau parmi un petit vocabulaire ou, de préférence, sélectionne une action déjà préparée par le moteur.
+Le modele ne doit pas reinventer les regles. Il doit choisir intelligemment entre les options.
 
-L'orchestrateur transforme ensuite cette action en intent OpenFront valide.
-
-## Important
-
-Un espace d'actions borné ne doit pas supprimer la liberté stratégique.
-
-La bonne cible est :
-
-- liberté sur le "pourquoi"
-- liberté sur le "quand"
-- liberté sur le "quel front"
-- liberté sur le "quel style"
-- sécurité sur le "comment exécuter"
-
-Autrement dit :
-
-- le modèle choisit la stratégie ;
-- le moteur sécurise l'exécution.
-
-## Format cible recommandé
-
-Le protocole le plus sûr pour un backend LLM n'est pas de laisser le modèle construire un payload complet.
-
-Le protocole recommandé est :
-
-1. le moteur calcule `valid_actions[]` ;
-2. chaque action reçoit un identifiant stable ;
-3. le bot répond avec `selected_action_id` ;
-4. l'orchestrateur résout cet identifiant vers l'action réelle.
-
-Ce schéma réduit fortement :
-
-- les erreurs JSON ;
-- les actions illégales ;
-- les hallucinations de paramètres ;
-- les ambiguïtés de coordonnées.
-
-## Protocole recommandé à trois niveaux
-
-### Niveau 1 : intention
-
-Le bot exprime sa direction stratégique.
-
-Exemples :
-
-- `expand_east`
-- `hold_north_front`
-- `prepare_naval_access`
-- `assist_ally_red_team`
-- `greedy_capture_weak_neighbor`
-
-### Niveau 2 : justification courte
-
-Le bot explique brièvement sa logique à partir de l'observation.
-
-### Niveau 3 : sélection d'action valide
-
-Le bot sélectionne une action concrète déjà jugée légale par le moteur.
-
-Ce format garde de la liberté sans laisser de vide mécanique.
-
-## Actions minimales
+## Familles d'actions
 
 - `wait`
 - `expand`
+- `build_structure`
 - `attack_land`
 - `attack_naval`
-- `build_structure`
-- `upgrade_structure`
 - `assist_ally`
 - `set_target`
-- `accept_alliance`
-- `reject_alliance`
-- `break_alliance`
-- `donate_gold`
-- `donate_troops`
+- `diplomacy`
 
-## Représentation recommandée des actions valides
+## Intention strategique
 
-```json
-{
-  "valid_actions": [
-    {
-      "id": "act_0001",
-      "type": "wait",
-      "label": "Hold current position"
-    },
-    {
-      "id": "act_0027",
-      "type": "build_structure",
-      "label": "Build Port on south coast",
-      "target": {
-        "structure_type": "Port",
-        "tile": 183920
-      }
-    }
-  ]
-}
-```
+Chaque action candidate peut etre accompagnee d'une intention ou d'un but, par exemple :
 
-## Réponse recommandée du bot
+- `safe_expansion`
+- `stabilize_front`
+- `convert_eco`
+- `prepare_naval_access`
+- `open_second_front`
+- `punish_exposed_enemy`
+- `assist_ally_under_pressure`
 
-```json
-{
-  "strategic_goal": "prepare_naval_access",
-  "tactical_reason": "No port built while a weak offshore target exists and south coast is available.",
-  "selected_action_id": "act_0027",
-  "confidence": 0.82
-}
-```
-
-## Format recommandé
-
-```json
-{
-  "action_type": "build_structure",
-  "reason": "No port on a maritime map and at least one reachable naval target exists.",
-  "target": {
-    "structure_type": "Port",
-    "tile": 183920
-  },
-  "confidence": 0.82
-}
-```
-
-Ce format reste utile pour bots scriptés ou intégrations internes, mais pour les LLM la sélection par ID est préférable.
-
-## Mode hybride possible
-
-Si on veut laisser davantage de liberté à certains modèles plus fiables :
-
-1. le modèle propose un petit plan libre ;
-2. l'orchestrateur le convertit en sous-objectif ;
-3. l'arbiter choisit parmi les actions valides celles qui satisfont le mieux ce plan.
-
-Exemple :
-
-```json
-{
-  "strategic_goal": "weaken north-west enemy before building more eco",
-  "preferred_action_types": ["attack_land", "assist_ally", "set_target"],
-  "selected_action_id": "act_0312",
-  "confidence": 0.74
-}
-```
-
-Ce mode est utile si tu veux laisser émerger davantage de personnalité de jeu.
+Ces intentions servent a expliquer et comparer. Elles ne remplacent pas la validation mecanique.
 
 ## Contraintes par action
 
@@ -165,73 +42,72 @@ Ce mode est utile si tu veux laisser émerger davantage de personnalité de jeu.
 Doit cibler :
 
 - `Terra Nullius`
-- ou une région explicitement marquée comme expansion sûre.
+- ou une region explicitement marquee comme expansion faisable.
 
 ### `attack_land`
 
 Conditions :
 
-- frontière terrestre confirmée ;
-- cible non alliée ;
-- réserve minimale préservée ;
-- pression entrante acceptable ou priorisée.
+- frontiere terrestre ou chemin terrestre confirme ;
+- cible non alliee ;
+- cout et execution possibles ;
+- action coherente avec l'etat reel du front.
 
 ### `attack_naval`
 
 Conditions :
 
-- cible non atteignable par terre ;
-- zone côtière de départ disponible ;
-- capacité navale construisible ;
-- intérêt stratégique réel.
+- zone cotiere de depart disponible ;
+- projection navale reelle ou preparable selon les actions autorisees ;
+- cible non alliee ;
+- interet strategique reel.
+
+Important :
+
+- une action navale n'exige pas que la cible soit impossible a atteindre par terre ;
+- elle est valide si la projection navale existe et si elle correspond a un angle utile.
+
+Usages typiques :
+
+- atteindre une cible hors portee terrestre ;
+- contourner un front dense ;
+- ouvrir un second front ;
+- frapper une cote ou un arriere plus faible ;
+- accelerer un timing offensif.
 
 ### `build_structure`
 
 Conditions :
 
-- type de bâtiment autorisé ;
+- type de batiment autorise ;
 - tuile buildable ;
-- coût disponible ;
-- justification stratégique.
+- cout disponible ;
+- justification strategique.
 
 ### `assist_ally`
 
 Conditions :
 
-- allié existant ;
-- cible non alliée ;
+- allie existant ;
 - front d'assistance atteignable ;
-- réserve suffisante.
+- aide qui n'ouvre pas un risque disproportionne ailleurs ;
+- action executable.
 
-## Validation
+## Ce qu'il ne faut pas faire
 
-Chaque action doit passer par un `Action Arbiter` qui vérifie :
+- encoder une heuristique comme si c'etait une condition legale ;
+- imposer un ordre global entre defense, build, expansion et attaque ;
+- faire du naval une simple case "sinon impossible par terre" ;
+- transformer `wait` en comportement refuge systematique.
 
-- légalité ;
-- atteignabilité ;
-- coût ;
-- cohérence avec l'état courant ;
-- limite de fréquence ;
-- éventuelle normalisation des cibles.
+## Format recommande pour une action candidate
 
-## Politique de timeout et d'échec
-
-Pour un backend externe :
-
-- si timeout : `wait`
-- si JSON invalide : tentative de récupération minimale sinon `wait`
-- si `selected_action_id` inconnu : `wait`
-- si action devenue invalide entre décision et exécution : `wait`
-
-Tous ces cas doivent être journalisés séparément.
-
-## Politique de fallback
-
-Si l'action proposée est invalide :
-
-1. tentative de correction sûre ;
-2. sinon `wait` ;
-3. journalisation de l'échec ;
-4. retour d'erreur structuré dans l'historique du bot.
-
-Le but n'est pas de "faire quand même", mais de garder un comportement robuste et comparable.
+```json
+{
+  "action_type": "attack_naval",
+  "target": "player_3",
+  "reason": "Naval flank opens a weaker coastal angle than the saturated land border.",
+  "confidence": 0.74,
+  "strategic_goal": "open_second_front"
+}
+```

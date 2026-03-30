@@ -1,18 +1,29 @@
 # Map Encoding
 
-## Problème
+## Probleme
 
 Un LLM ne voit pas naturellement la carte comme un humain.
 
-Lui donner une matrice brute de milliers de tuiles est rarement utile. Il faut une représentation intermédiaire plus lisible.
+Lui donner une matrice brute de milliers de tuiles est rarement utile. Il faut une representation intermediaire plus lisible.
+
+## Intention
+
+L'encodage de carte doit donner a l'IA une lecture jouable du terrain.
+
+Il ne doit pas :
+
+- la noyer dans la grille brute ;
+- cacher la geographie utile ;
+- prescrire une strategie ;
+- confondre resume de carte et plan de jeu.
 
 ## Principe
 
-La "visualisation de la carte" pour le bot doit être textuelle et structurelle, pas graphique.
+La "visualisation de la carte" pour le bot doit etre textuelle et structurelle, pas graphique.
 
 Il faut exposer trois niveaux.
 
-## Niveau 1 : résumé global
+## Niveau 1 : resume global
 
 Exemple :
 
@@ -29,7 +40,7 @@ Map summary
 
 ## Niveau 2 : fronts
 
-Un front est le meilleur compromis entre précision et lisibilité.
+Un front est le meilleur compromis entre precision et lisibilite.
 
 Exemple :
 
@@ -41,34 +52,34 @@ Front NW
 - enemy_strength: high
 - distance_to_enemy_core: short
 - neutral_tiles_available: no
-- recommended_modes: defend, build_defense_post, attack_if_reinforced
+- notable_options: defend, reinforce, counterattack_if_window_opens
 ```
 
-## Niveau 3 : régions / points d'intérêt
+## Niveau 3 : regions et points d'interet
 
-Découper la carte en zones utiles :
+Decouper la carte en zones utiles :
 
 - front nord ;
-- côte sud ;
-- coeur économique ;
+- cote sud ;
+- coeur economique ;
 - couloir d'expansion est ;
-- île ennemie ;
-- arrière-ligne protégée.
+- ile ennemie ;
+- arriere-ligne protegee.
 
-Chaque région peut avoir :
+Chaque region peut avoir :
 
 - un centre ;
 - une superficie ;
 - un statut ;
 - des structures ;
-- une importance ;
-- des voisins régionaux.
+- une importance contextuelle ;
+- des voisins regionaux.
 
-## Encodages recommandés
+## Encodages recommandes
 
 ### Encodage tabulaire
 
-Bon pour API et modèles généralistes.
+Bon pour API et modeles generalistes.
 
 ```json
 {
@@ -77,7 +88,7 @@ Bon pour API et modèles généralistes.
       "id": "north_front",
       "role": "land_front",
       "owner": "self",
-      "priority": "high",
+      "importance_hint": "high",
       "hostile_neighbors": ["player_red"],
       "friendly_neighbors": [],
       "key_structures": ["DefensePost"],
@@ -89,16 +100,16 @@ Bon pour API et modèles généralistes.
 
 ### Encodage graphe
 
-Le plus propre à terme.
+Le plus propre a terme.
 
 Noeuds :
 
-- régions ;
+- regions ;
 - joueurs ;
 - structures ;
 - fronts.
 
-Arêtes :
+Aretes :
 
 - adjacent ;
 - attacks ;
@@ -109,24 +120,24 @@ Arêtes :
 
 ### Encodage hybride
 
-Le plus réaliste pour un premier MVP :
+Le plus realiste pour un premier MVP :
 
-- résumé global ;
+- resume global ;
 - liste de fronts ;
 - liste de voisins ;
 - liste de structures ;
-- liste de régions prioritaires ;
+- liste de regions importantes ;
 - liste d'actions valides.
 
-## Recommandation pratique
+## Regle pratique
 
 Pour le premier prototype, ne pas exposer toute la grille.
 
-Exposer plutôt :
+Exposer plutot :
 
-- 1 résumé global ;
-- 3 à 8 fronts ;
-- 5 à 20 points d'intérêt ;
-- un ensemble d'actions valides annotées.
+- 1 resume global ;
+- 3 a 8 fronts ;
+- 5 a 20 points d'interet ;
+- un ensemble d'actions valides annotees.
 
-C'est suffisant pour que le modèle "comprenne la carte" sans être noyé.
+C'est suffisant pour que le modele "comprenne la carte" sans etre noye.
