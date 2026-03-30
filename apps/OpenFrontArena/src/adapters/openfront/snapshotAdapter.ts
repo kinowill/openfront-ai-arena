@@ -464,6 +464,52 @@ function findNavalAttackActions(
   return actions;
 }
 
+function hasNavalProjectionToPlayer(
+  game: OpenFrontGame,
+  player: OpenFrontPlayer,
+  target: OpenFrontPlayer,
+): boolean {
+  let reachable = false;
+
+  game.forEachTile((tile) => {
+    if (reachable || !game.isLand(tile) || game.hasFallout(tile)) {
+      return;
+    }
+
+    const owner = game.owner(tile);
+    if (!isPlayer(owner) || owner.id() !== target.id()) {
+      return;
+    }
+
+    const launchTile = player.canBuild(UNIT_TRANSPORT, tile);
+    if (launchTile !== false) {
+      reachable = true;
+    }
+  });
+
+  return reachable;
+}
+
+function reachabilityForNeighbor(
+  game: OpenFrontGame,
+  player: OpenFrontPlayer,
+  neighbor: OpenFrontPlayer,
+): "land" | "naval" | "mixed" | "unreachable" {
+  const canLandAttack = player.canAttackPlayer(neighbor);
+  const canNavalProject = hasNavalProjectionToPlayer(game, player, neighbor);
+
+  if (canLandAttack && canNavalProject) {
+    return "mixed";
+  }
+  if (canLandAttack) {
+    return "land";
+  }
+  if (canNavalProject) {
+    return "naval";
+  }
+  return "unreachable";
+}
+
 function findBuildActions(
   player: OpenFrontPlayer,
   game: OpenFrontGame,
@@ -682,7 +728,10 @@ function buildFronts(
   });
 }
 
-function buildNeighbors(player: OpenFrontPlayer): BotNeighbor[] {
+function buildNeighbors(
+  game: OpenFrontGame,
+  player: OpenFrontPlayer,
+): BotNeighbor[] {
   const myTroops = player.troops();
   const neighbors: Array<BotNeighbor | null> = player
     .neighbors()
@@ -701,7 +750,7 @@ function buildNeighbors(player: OpenFrontPlayer): BotNeighbor[] {
       return {
         playerId: neighbor.id(),
         relation,
-        reachability: "land",
+        reachability: reachabilityForNeighbor(game, player, neighbor),
         troops: neighbor.troops(),
         tilesOwned: neighbor.numTilesOwned(),
         pressureFromOthers: clamp01(
@@ -954,6 +1003,7 @@ function mapArchetype(mapName: string, coastalImportance: number): MapArchetype 
 
 function summarizeStrategy(
   player: OpenFrontPlayer,
+  neighbors: BotNeighbor[],
   opportunities: BotOpportunity[],
   threats: BotThreat[],
 ): string[] {
@@ -966,6 +1016,16 @@ function summarizeStrategy(
     opportunities.some((entry) => entry.type === "build_port_for_offshore_access")
   ) {
     summary.push("A port build would unlock meaningful naval projection.");
+  }
+  const navalReachableHostiles = neighbors.filter(
+    (entry) =>
+      entry.relation === "hostile" &&
+      (entry.reachability === "naval" || entry.reachability === "mixed"),
+  ).length;
+  if (navalReachableHostiles > 0) {
+    summary.push(
+      `${navalReachableHostiles} hostile player(s) are reachable through a naval angle.`,
+    );
   }
   if (threats.some((entry) => entry.type === "major_incoming_attack")) {
     summary.push(
@@ -1052,7 +1112,7 @@ export class OpenFrontSnapshotAdapter
         .reduce((sum, attack) => sum + attack.troops(), 0) /
         Math.max(1, maxTroopsEstimate),
     );
-    const neighbors = buildNeighbors(player);
+    const neighbors = buildNeighbors(game, player);
     const fronts = buildFronts(game, player);
     const buildCandidates = summarizeBuildCandidates(player, game);
     const opportunities = buildOpportunities(game, player, fronts);
@@ -1119,8 +1179,13 @@ export class OpenFrontSnapshotAdapter
         incomingAttackPressure,
         outgoingAttackPressure,
         landPressure: clamp01(hostileNeighbors.length / Math.max(1, neighbors.length)),
-        navalPressure:
-          coastalImportance > 0 && player.unitsOwned(UNIT_PORT) === 0 ? 0.45 : 0,
+        navalPressure: clamp01(
+          neighbors.filter(
+            (neighbor) =>
+              neighbor.relation === "hostile" &&
+              (neighbor.reachability === "naval" || neighbor.reachability === "mixed"),
+          ).length / Math.max(1, neighbors.length),
+        ),
         nuclearThreatLevel: threats.some((entry) => entry.type === "nuclear_threat")
           ? 0.7
           : 0,
@@ -1190,7 +1255,7 @@ export class OpenFrontSnapshotAdapter
       opportunities,
       threats,
       recentEvents: [],
-      strategicSummary: summarizeStrategy(player, opportunities, threats),
+      strategicSummary: summarizeStrategy(player, neighbors, opportunities, threats),
       validActions,
     };
   }

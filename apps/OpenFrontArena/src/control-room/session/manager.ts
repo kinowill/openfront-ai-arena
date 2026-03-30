@@ -8,6 +8,9 @@ import {
   PlayerType,
 } from "../../../../OpenFrontIO/src/core/game/Game";
 import { GreedyExpandBot } from "../../bots/GreedyExpandBot";
+import { AggressiveFrontlineBot } from "../../bots/AggressiveFrontlineBot";
+import { EconomicGrowthBot } from "../../bots/EconomicGrowthBot";
+import { NavalPressureBot } from "../../bots/NavalPressureBot";
 import type { OpenFrontBot } from "../../bots/types";
 import { JsonlTickLogger } from "../../runtime/tickLogger";
 import { LocalLlmBot } from "../../runtimes/localLlmBot";
@@ -380,6 +383,21 @@ export class ControlRoomSessionManager {
       case "greedy_expand":
         return new GreedyExpandBot({
           id: `${slot.slotId}_greedy_expand`,
+          displayName: slot.label,
+        });
+      case "aggressive_frontline":
+        return new AggressiveFrontlineBot({
+          id: `${slot.slotId}_aggressive_frontline`,
+          displayName: slot.label,
+        });
+      case "economic_growth":
+        return new EconomicGrowthBot({
+          id: `${slot.slotId}_economic_growth`,
+          displayName: slot.label,
+        });
+      case "naval_pressure":
+        return new NavalPressureBot({
+          id: `${slot.slotId}_naval_pressure`,
           displayName: slot.label,
         });
       case "local_llm": {

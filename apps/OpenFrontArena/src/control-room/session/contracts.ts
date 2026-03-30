@@ -2,6 +2,9 @@ export type ControlRoomSlotKind = "bot" | "human_reserved";
 
 export type ControlRoomBotPreset =
   | "greedy_expand"
+  | "aggressive_frontline"
+  | "economic_growth"
+  | "naval_pressure"
   | "local_llm"
   | "remote_api"
   | "human_operator";

@@ -47,8 +47,8 @@ const HARNESS_GAME_ID: GameID = "openfront-arena-local-harness";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const ROOT_DIR = path.resolve(__dirname, "../../..");
-const OPENFRONT_ROOT = path.resolve(ROOT_DIR, "..", "OpenFrontIO");
+const ARENA_ROOT = path.resolve(__dirname, "../..");
+const OPENFRONT_ROOT = path.resolve(ARENA_ROOT, "../OpenFrontIO");
 
 class HarnessConfig extends DefaultConfig {
   disableNavMesh(): boolean {
@@ -235,7 +235,7 @@ export async function runLocalHarnessTick() {
   const loop = new OpenFrontBotLoop(game, matchRef, {
     mapVersion: "ocean_and_land@test",
     tickLogger: new JsonlTickLogger(
-      path.join(ROOT_DIR, "logs", "local-harness.jsonl"),
+      path.join(ARENA_ROOT, "logs", "local-harness.jsonl"),
     ),
   });
 

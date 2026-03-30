@@ -602,6 +602,9 @@ function slotSummary(slot) {
   if (slot.slotKind === "human_reserved") return t("slot_kind_human");
   if (slot.preset === "local_llm") return "IA locale";
   if (slot.preset === "remote_api") return "API distante";
+  if (slot.preset === "aggressive_frontline") return "Baseline agressive";
+  if (slot.preset === "economic_growth") return "Baseline eco";
+  if (slot.preset === "naval_pressure") return "Baseline navale";
   return t("backend_rule_based");
 }
 
@@ -609,6 +612,9 @@ function backendLabel(slot) {
   if (slot.slotKind === "human_reserved") return t("backend_human");
   if (slot.preset === "local_llm") return "Local LLM";
   if (slot.preset === "remote_api") return "Remote API";
+  if (slot.preset === "aggressive_frontline") return "Aggressive";
+  if (slot.preset === "economic_growth") return "Economic";
+  if (slot.preset === "naval_pressure") return "Naval";
   return "GreedyExpand";
 }
 
@@ -616,6 +622,9 @@ function slotHelp(slot) {
   if (slot.slotKind === "human_reserved" || slot.preset === "human_operator") return t("bot_help_human");
   if (slot.preset === "local_llm") return t("bot_help_local");
   if (slot.preset === "remote_api") return t("bot_help_remote");
+  if (slot.preset === "aggressive_frontline") return "Baseline axee sur la pression de front et les attaques terrestres.";
+  if (slot.preset === "economic_growth") return "Baseline axee sur l'infrastructure, l'upgrade et la croissance.";
+  if (slot.preset === "naval_pressure") return "Baseline axee sur les ports et les angles navals.";
   return t("bot_help_greedy");
 }
 
@@ -754,7 +763,12 @@ function syncSlotShape(slot) {
     next.preset = "greedy_expand";
   }
 
-  if (next.preset === "greedy_expand") {
+  if (
+    next.preset === "greedy_expand" ||
+    next.preset === "aggressive_frontline" ||
+    next.preset === "economic_growth" ||
+    next.preset === "naval_pressure"
+  ) {
     next.model = null;
     next.baseUrl = null;
     next.apiKeyEnv = null;
@@ -822,6 +836,9 @@ function slotCard(slot, index, config) {
           <label>${t("slot_backend")}</label>
           <select class="input" data-field="preset" ${isHuman ? "disabled" : ""}>
             <option value="greedy_expand" ${slot.preset === "greedy_expand" ? "selected" : ""}>GreedyExpand</option>
+            <option value="aggressive_frontline" ${slot.preset === "aggressive_frontline" ? "selected" : ""}>Aggressive Frontline</option>
+            <option value="economic_growth" ${slot.preset === "economic_growth" ? "selected" : ""}>Economic Growth</option>
+            <option value="naval_pressure" ${slot.preset === "naval_pressure" ? "selected" : ""}>Naval Pressure</option>
             <option value="local_llm" ${slot.preset === "local_llm" ? "selected" : ""}>Local LLM</option>
             <option value="remote_api" ${slot.preset === "remote_api" ? "selected" : ""}>Remote API</option>
             <option value="human_operator" ${slot.preset === "human_operator" ? "selected" : ""}>${t("backend_human")}</option>
