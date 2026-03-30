@@ -1,4 +1,6 @@
 import { randomUUID } from "node:crypto";
+import fs from "node:fs/promises";
+import path from "node:path";
 import type { Game, Player } from "../../../../OpenFrontIO/src/core/game/Game";
 import { createGameRunner, type GameRunner } from "../../../../OpenFrontIO/src/core/GameRunner";
 import type {
@@ -25,6 +27,7 @@ export interface HeadlessBotClientOptions {
   displayName: string;
   lobby: OpenFrontBridgeLobbyInfo;
   tickLogger: JsonlTickLogger;
+  debugLogPath?: string;
   matchRef: MatchRef;
   onSummary?: (summary: string, tick?: number | null) => void;
 }
@@ -52,6 +55,23 @@ export class HeadlessBotClient {
   private joinedLobby = false;
 
   constructor(private readonly options: HeadlessBotClientOptions) {}
+
+  private async debug(event: string, payload: Record<string, unknown> = {}): Promise<void> {
+    if (!this.options.debugLogPath) {
+      return;
+    }
+    await fs.mkdir(path.dirname(this.options.debugLogPath), { recursive: true });
+    await fs.appendFile(
+      this.options.debugLogPath,
+      `${JSON.stringify({
+        ts: new Date().toISOString(),
+        bot: this.options.displayName,
+        event,
+        ...payload,
+      })}\n`,
+      "utf8",
+    );
+  }
 
   async connect(): Promise<void> {
     const WebSocketCtor = (globalThis as any).WebSocket;
@@ -81,6 +101,7 @@ export class HeadlessBotClient {
       };
 
       this.socket.addEventListener("open", async () => {
+        await this.debug("socket_open", { lobby: this.options.lobby.gameId });
         await this.send({
           type: "join",
           token: this.token,
@@ -94,6 +115,9 @@ export class HeadlessBotClient {
 
       this.socket.addEventListener("message", (event: MessageEvent<string>) => {
         void this.onMessage(String(event.data)).catch((error) => {
+          void this.debug("message_error", {
+            error: error instanceof Error ? error.message : "unknown error",
+          });
           this.options.onSummary?.(
             `${this.options.displayName} runtime error: ${error instanceof Error ? error.message : "unknown error"}`,
             null,
@@ -102,11 +126,13 @@ export class HeadlessBotClient {
       });
       this.socket.addEventListener("close", () => {
         this.stopPing();
+        void this.debug("socket_close", { joinedLobby: this.joinedLobby });
         if (!this.joinedLobby && this.joinReject) {
           this.joinReject(new Error(`Bot ${this.options.displayName} disconnected before lobby join.`));
         }
       });
       this.socket.addEventListener("error", () => {
+        void this.debug("socket_error");
         if (this.joinReject) {
           this.joinReject(new Error(`Bot ${this.options.displayName} websocket error.`));
         }
@@ -136,6 +162,10 @@ export class HeadlessBotClient {
 
     switch (message.type) {
       case "lobby_info":
+        await this.debug("lobby_info", {
+          assignedClientId: message.myClientID,
+          connectedPlayers: message.lobby.clients?.length ?? null,
+        });
         this.assignedClientId = message.myClientID;
         this.joinedLobby = true;
         this.options.onSummary?.(
@@ -145,12 +175,24 @@ export class HeadlessBotClient {
         this.joinResolve?.();
         break;
       case "start":
+        await this.debug("start", {
+          assignedClientId: message.myClientID ?? this.assignedClientId,
+          players: message.gameStartInfo.players.length,
+          turnBacklog: message.turns.length,
+        });
         await this.onStart(message);
         break;
       case "turn":
+        if (message.turn.turnNumber <= 3 || message.turn.turnNumber % 25 === 0) {
+          await this.debug("turn", {
+            turn: message.turn.turnNumber,
+            intents: message.turn.intents.length,
+          });
+        }
         await this.onTurn(message.turn);
         break;
       case "error":
+        await this.debug("transport_error", { error: message.error });
         if (!this.joinedLobby && this.joinReject) {
           this.joinReject(new Error(`${this.options.displayName} transport error: ${message.error}`));
         }
@@ -199,15 +241,26 @@ export class HeadlessBotClient {
 
   private async playCurrentTurn(): Promise<void> {
     if (!this.runner || !this.assignedClientId) {
+      await this.debug("play_skipped", {
+        reason: !this.runner ? "no_runner" : "no_assigned_client_id",
+      });
       return;
     }
 
     const game = this.runner.game;
     const player = game.playerByClientID(this.assignedClientId);
     if (!player) {
+      await this.debug("play_skipped", {
+        reason: "player_not_found",
+        assignedClientId: this.assignedClientId,
+      });
       return;
     }
     if (player.hasSpawned() && !player.isAlive()) {
+      await this.debug("play_skipped", {
+        reason: "dead_player",
+        playerId: player.id(),
+      });
       return;
     }
 
@@ -228,6 +281,14 @@ export class HeadlessBotClient {
       tick: observation.match.tick,
     });
     const arbitration = arbitrateDecision(observation, runtimeDecision.decision);
+    await this.debug("decision", {
+      tick: observation.match.tick,
+      playerId: player.id(),
+      spawned: player.hasSpawned(),
+      selectedActionId: runtimeDecision.decision.selectedActionId,
+      selectedActionType: arbitration.executedAction.type,
+      validActions: observation.validActions.length,
+    });
     const intent = buildIntentFromValidAction(
       arbitration.executedAction,
       player,
@@ -238,6 +299,15 @@ export class HeadlessBotClient {
       await this.send({
         type: "intent",
         intent,
+      });
+      await this.debug("intent_sent", {
+        tick: observation.match.tick,
+        intentType: intent.type,
+      });
+    } else {
+      await this.debug("intent_skipped", {
+        tick: observation.match.tick,
+        selectedActionType: arbitration.executedAction.type,
       });
     }
 

@@ -39,6 +39,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, "../../..");
 const LOG_FILE = path.join(ROOT_DIR, "logs", "local-harness.jsonl");
+const DEBUG_LOG_FILE = path.join(ROOT_DIR, "logs", "headless-bots.jsonl");
 const AVAILABLE_MAPS = Object.values(GameMapType);
 const RANDOM_MAP_VALUE = "__random__";
 const TEAM_COLORS = ["Red", "Blue", "Teal", "Purple", "Yellow", "Orange", "Green"] as const;
@@ -289,6 +290,7 @@ export class ControlRoomSessionManager {
       }
 
       await fs.writeFile(LOG_FILE, "", "utf8");
+      await fs.writeFile(DEBUG_LOG_FILE, "", "utf8");
 
       const enabledSlots = this.config.slots.filter((slot) => slot.enabled);
       const totalParticipants = enabledSlots.length + this.config.nativeBotCount;
@@ -338,6 +340,7 @@ export class ControlRoomSessionManager {
           displayName: slot.label,
           lobby,
           tickLogger: this.tickLogger,
+          debugLogPath: DEBUG_LOG_FILE,
           matchRef: {
             id: lobby.gameId,
             tick: 0,
