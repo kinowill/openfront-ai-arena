@@ -56,6 +56,7 @@ export class HeadlessBotClient {
   private playInFlight = false;
   private playQueued = false;
   private spawnAttempt = 0;
+  private runnerBroken = false;
 
   constructor(private readonly options: HeadlessBotClientOptions) {}
 
@@ -255,10 +256,23 @@ export class HeadlessBotClient {
       message.gameStartInfo,
       this.assignedClientId ?? undefined,
       this.mapLoader,
-      () => {
-        // The bot only needs deterministic state reconstruction here.
+      (update) => {
+        if (!("errMsg" in update)) {
+          return;
+        }
+        this.runnerBroken = true;
+        void this.debug("runner_error", {
+          errMsg: update.errMsg,
+          stack: update.stack ?? null,
+          latestTurn: this.latestTurn,
+        });
+        this.options.onSummary?.(
+          `${this.options.displayName} runner error: ${update.errMsg}`,
+          this.runner?.game.ticks() ?? null,
+        );
       },
     );
+    this.runnerBroken = false;
     await this.debug("start_runner_ready", {
       assignedClientId: this.assignedClientId,
       ticks: this.runner.game.ticks(),
@@ -316,6 +330,12 @@ export class HeadlessBotClient {
     if (!this.runner || !this.assignedClientId) {
       await this.debug("play_skipped", {
         reason: !this.runner ? "no_runner" : "no_assigned_client_id",
+      });
+      return;
+    }
+    if (this.runnerBroken) {
+      await this.debug("play_skipped", {
+        reason: "runner_broken",
       });
       return;
     }
