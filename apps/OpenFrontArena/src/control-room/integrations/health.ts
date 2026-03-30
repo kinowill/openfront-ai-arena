@@ -18,6 +18,50 @@ function localHint(baseUrl: string): string {
   return "Serveur local non joignable. Verifie que le service tourne puis reteste.";
 }
 
+function compactExcerpt(raw: string | null | undefined, maxLength = 240): string | null {
+  const compact = String(raw ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!compact) return null;
+  return compact.length > maxLength ? `${compact.slice(0, maxLength - 3)}...` : compact;
+}
+
+async function readErrorDetail(response: Response): Promise<string | null> {
+  try {
+    const text = await response.text();
+    const excerpt = compactExcerpt(text);
+    if (!excerpt) {
+      return null;
+    }
+
+    try {
+      const payload = JSON.parse(text) as {
+        error?: { message?: string; code?: string; type?: string } | string;
+        message?: string;
+      };
+      if (typeof payload.error === "string") {
+        return compactExcerpt(payload.error) ?? excerpt;
+      }
+      if (payload.error?.message) {
+        return compactExcerpt(
+          [payload.error.type, payload.error.code, payload.error.message]
+            .filter(Boolean)
+            .join(" | "),
+        ) ?? excerpt;
+      }
+      if (payload.message) {
+        return compactExcerpt(payload.message) ?? excerpt;
+      }
+    } catch {
+      return excerpt;
+    }
+
+    return excerpt;
+  } catch {
+    return null;
+  }
+}
+
 export async function checkOpenAICompatibleIntegration(input: {
   backend: "local_llm" | "remote_api";
   baseUrl: string;
@@ -44,6 +88,7 @@ export async function checkOpenAICompatibleIntegration(input: {
       signal: controller.signal,
     });
     clearTimeout(timeout);
+    const errorDetail = response.ok ? null : await readErrorDetail(response);
 
     if (response.status === 401 || response.status === 403) {
       return {
@@ -51,7 +96,9 @@ export async function checkOpenAICompatibleIntegration(input: {
         summary: "Authentification refusee",
         detail:
           input.backend === "remote_api"
-            ? "La cle API directe ou la variable d'environnement semble invalide."
+            ? errorDetail
+              ? `Authentification distante refusee: ${errorDetail}`
+              : "La cle API directe ou la variable d'environnement semble invalide."
             : "Le serveur local demande une authentification non attendue.",
         checkedAt,
       };
@@ -61,7 +108,9 @@ export async function checkOpenAICompatibleIntegration(input: {
       return {
         status: "error",
         summary: `HTTP ${response.status}`,
-        detail: `Le serveur a repondu avec ${response.status} ${response.statusText}.`,
+        detail: errorDetail
+          ? `Le serveur a repondu avec ${response.status} ${response.statusText}: ${errorDetail}`
+          : `Le serveur a repondu avec ${response.status} ${response.statusText}.`,
         checkedAt,
       };
     }
