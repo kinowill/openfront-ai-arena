@@ -172,6 +172,7 @@ export class ControlRoomSessionManager {
   private currentMatchActive = false;
   private botClients: HeadlessBotClient[] = [];
   private readonly tickLogger = new JsonlTickLogger(LOG_FILE);
+  private slotApiKeys = new Map<string, string>();
 
   private buildLiveMap(): ControlRoomLiveMap | null {
     if (!this.currentGame) {
@@ -227,6 +228,7 @@ export class ControlRoomSessionManager {
       await client.stop();
     }
     this.botClients = [];
+    this.slotApiKeys.clear();
     this.currentGame = null;
     this.currentMatchActive = false;
     this.runtime = {
@@ -238,7 +240,20 @@ export class ControlRoomSessionManager {
     return this.snapshot();
   }
 
-  async start(): Promise<ControlRoomSessionSnapshot> {
+  async start(runtimeSecrets?: {
+    slotSecrets?: Array<{ slotId?: string; apiKey?: string | null }>;
+  }): Promise<ControlRoomSessionSnapshot> {
+    if (runtimeSecrets?.slotSecrets) {
+      this.slotApiKeys.clear();
+      for (const slotSecret of runtimeSecrets.slotSecrets) {
+        const slotId = slotSecret.slotId?.trim();
+        const apiKey = slotSecret.apiKey?.trim();
+        if (slotId && apiKey) {
+          this.slotApiKeys.set(slotId, apiKey);
+        }
+      }
+    }
+
     if (this.runtime.status === "running") {
       return this.snapshot();
     }
@@ -414,6 +429,7 @@ export class ControlRoomSessionManager {
         const model = slot.model ?? process.env.OPENFRONT_BOTS_REMOTE_API_MODEL;
         const baseUrl = slot.baseUrl ?? process.env.OPENFRONT_BOTS_REMOTE_API_BASE_URL;
         const apiKey =
+          this.slotApiKeys.get(slot.slotId) ??
           (slot.apiKeyEnv ? process.env[slot.apiKeyEnv] : undefined) ??
           process.env.OPENFRONT_BOTS_REMOTE_API_KEY;
         if (!model || !baseUrl || !apiKey) {

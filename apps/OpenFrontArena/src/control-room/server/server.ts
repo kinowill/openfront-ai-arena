@@ -92,7 +92,10 @@ export function startControlRoomServer(port = 4318): http.Server {
     }
 
     if (url.pathname === "/api/session/start" && req.method === "POST") {
-      const snapshot = await controlRoomSessionManager.start();
+      const body = (await readJsonBody(req)) as {
+        slotSecrets?: Array<{ slotId?: string; apiKey?: string | null }>;
+      };
+      const snapshot = await controlRoomSessionManager.start(body);
       res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
       res.end(JSON.stringify(snapshot));
       return;
@@ -141,6 +144,7 @@ export function startControlRoomServer(port = 4318): http.Server {
         baseUrl?: string | null;
         model?: string | null;
         apiKeyEnv?: string | null;
+        apiKey?: string | null;
       };
 
       if (body.backend !== "local_llm" && body.backend !== "remote_api") {
@@ -158,8 +162,9 @@ export function startControlRoomServer(port = 4318): http.Server {
           : process.env.OPENFRONT_BOTS_REMOTE_API_BASE_URL ?? null;
       const apiKey =
         body.backend === "remote_api"
-          ? (body.apiKeyEnv ? process.env[body.apiKeyEnv] : undefined) ??
-            process.env.OPENFRONT_BOTS_REMOTE_API_KEY
+          ? body.apiKey?.trim() ||
+            ((body.apiKeyEnv ? process.env[body.apiKeyEnv] : undefined) ??
+              process.env.OPENFRONT_BOTS_REMOTE_API_KEY)
           : undefined;
 
       const result = await checkOpenAICompatibleIntegration({

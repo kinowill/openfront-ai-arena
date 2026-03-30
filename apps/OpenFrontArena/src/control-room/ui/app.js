@@ -95,6 +95,8 @@ const I18N = {
     slot_model: "Modele",
     slot_base_url: "Base URL",
     slot_api_env: "Variable API key",
+    slot_api_key_direct: "Cle API directe",
+    slot_api_or: "ou",
     field_bot_batch: "Bots en masse",
     add_bot: "Ajouter un bot",
     add_human: "Ajouter un humain",
@@ -124,7 +126,7 @@ const I18N = {
     bot_help_local:
       "Local LLM : mets l'URL de ton serveur OpenAI-compatible local et le nom du modele. Exemple typique : base URL LM Studio ou vLLM local.",
     bot_help_remote:
-      "Remote API : mets l'URL de l'API compatible OpenAI, le nom du modele et le nom de variable d'environnement qui contient la cle API.",
+      "Remote API : mets l'URL de l'API compatible OpenAI, le nom du modele, puis soit une cle API directe gardee localement dans le navigateur, soit un nom de variable d'environnement.",
     bot_help_human:
       "Human operator reserve une place humaine. Aucun modele ni URL n'est requis.",
     field_model_hint_local: "Exemple : qwen2.5-7b-instruct",
@@ -132,6 +134,7 @@ const I18N = {
     field_model_hint_remote: "Exemple : gpt-4o-mini",
     field_base_url_hint_remote: "Exemple : https://api.openai.com/v1",
     field_api_env_hint_remote: "Exemple : OPENAI_API_KEY",
+    field_api_key_direct_hint_remote: "Collee ici, masque et non sauvegardee",
     test_connection: "Tester la connexion",
     testing_connection: "Test en cours...",
     connection_idle: "Aucun test lance.",
@@ -211,6 +214,8 @@ const I18N = {
     slot_model: "Model",
     slot_base_url: "Base URL",
     slot_api_env: "API key env var",
+    slot_api_key_direct: "Direct API key",
+    slot_api_or: "or",
     field_bot_batch: "Bulk bots",
     add_bot: "Add bot",
     add_human: "Add human",
@@ -240,7 +245,7 @@ const I18N = {
     bot_help_local:
       "Local LLM: enter your local OpenAI-compatible server URL and the model name. Typical examples include LM Studio, Ollama with an OpenAI bridge, or a local vLLM endpoint.",
     bot_help_remote:
-      "Remote API: enter the OpenAI-compatible API URL, the model name, and the environment variable that stores the API key.",
+      "Remote API: enter the OpenAI-compatible API URL, the model name, then either a direct API key kept locally in the browser or the environment variable name that stores it.",
     bot_help_human:
       "Human operator reserves a human seat. No model or URL is required.",
     field_model_hint_local: "Example: qwen2.5-7b-instruct",
@@ -248,6 +253,7 @@ const I18N = {
     field_model_hint_remote: "Example: gpt-4o-mini",
     field_base_url_hint_remote: "Example: https://api.openai.com/v1",
     field_api_env_hint_remote: "Example: OPENAI_API_KEY",
+    field_api_key_direct_hint_remote: "Pasted here, masked and not saved",
     test_connection: "Test connection",
     testing_connection: "Testing...",
     connection_idle: "No test has been run yet.",
@@ -307,6 +313,7 @@ let latestTick = null;
 let sessionDirty = false;
 let draftSessionConfig = null;
 let integrationChecks = {};
+let slotApiSecrets = {};
 
 const numberFormat = new Intl.NumberFormat("fr-FR");
 const percentFormat = new Intl.NumberFormat("fr-FR", {
@@ -643,6 +650,7 @@ function slotFieldHint(slot, field) {
     if (field === "model") return t("field_model_hint_remote");
     if (field === "baseUrl") return t("field_base_url_hint_remote");
     if (field === "apiKeyEnv") return t("field_api_env_hint_remote");
+    if (field === "apiKeyDirect") return t("field_api_key_direct_hint_remote");
   }
   return "";
 }
@@ -785,12 +793,32 @@ function syncSlotShape(slot) {
   return next;
 }
 
+function slotSecret(slotId) {
+  return slotApiSecrets[slotId] || "";
+}
+
+function updateSlotSecret(slotId, value) {
+  if (!slotId) return;
+  if (value) {
+    slotApiSecrets = {
+      ...slotApiSecrets,
+      [slotId]: value,
+    };
+    return;
+  }
+
+  const nextSecrets = { ...slotApiSecrets };
+  delete nextSecrets[slotId];
+  slotApiSecrets = nextSecrets;
+}
+
 function slotCard(slot, index, config) {
   const disabledClass = slot.enabled ? "" : "is-disabled";
   const isHuman = slot.slotKind === "human_reserved";
   const showModel = !isHuman && (slot.preset === "local_llm" || slot.preset === "remote_api");
   const showBaseUrl = !isHuman && (slot.preset === "local_llm" || slot.preset === "remote_api");
   const showApiKeyEnv = !isHuman && slot.preset === "remote_api";
+  const showApiKeyDirect = !isHuman && slot.preset === "remote_api";
   const showTeamChoice = config.gameMode === "team";
   const teamOptions = teamChoices(config.teamCount)
     .map(
@@ -860,6 +888,14 @@ function slotCard(slot, index, config) {
         <div class="form-group" style="${showBaseUrl ? '' : 'display:none;'}">
           <label>${t("slot_base_url")} <span class="text-xs font-normal text-muted">(${slotFieldHint(slot, "baseUrl")})</span></label>
           <input class="input" data-field="baseUrl" type="text" value="${slot.baseUrl || ""}" placeholder="${slot.preset === "remote_api" ? "https://api.openai.com/v1" : "http://127.0.0.1:1234/v1"}" />
+        </div>
+        <div class="form-group" style="${showApiKeyEnv ? '' : 'display:none;'}">
+          <label>${t("slot_api_key_direct")} <span class="text-xs font-normal text-muted">(${slotFieldHint(slot, "apiKeyDirect")})</span></label>
+          <input class="input" data-field="apiKeyDirect" type="password" value="${escapeHtml(slotSecret(slot.slotId))}" placeholder="sk-..." autocomplete="off" spellcheck="false" />
+        </div>
+        <div class="form-group" style="${showApiKeyDirect && showApiKeyEnv ? '' : 'display:none;'}">
+          <label>${t("slot_api_or")}</label>
+          <div class="text-xs text-muted">${t("slot_api_env")}</div>
         </div>
         <div class="form-group" style="${showApiKeyEnv ? '' : 'display:none;'}">
           <label>${t("slot_api_env")} <span class="text-xs font-normal text-muted">(${slotFieldHint(slot, "apiKeyEnv")})</span></label>
@@ -1031,6 +1067,7 @@ function collectSessionConfig() {
   const sourceSlots = draftSessionConfig?.slots || latestDashboard.session.config.slots;
   const slots = Array.from(el.slotEditor.querySelectorAll("[data-slot-index]")).map((node, index) => {
     const field = (name) => node.querySelector(`[data-field="${name}"]`);
+    updateSlotSecret(sourceSlots[index].slotId, field("apiKeyDirect")?.value || "");
     return syncSlotShape({
       slotId: sourceSlots[index].slotId,
       enabled: field("enabled").checked,
@@ -1086,7 +1123,15 @@ async function saveSession() {
 
 async function startSession() {
   await saveSession();
-  const session = await api("/api/session/start", { method: "POST" });
+  const session = await api("/api/session/start", {
+    method: "POST",
+    body: JSON.stringify({
+      slotSecrets: Object.entries(slotApiSecrets).map(([slotId, apiKey]) => ({
+        slotId,
+        apiKey,
+      })),
+    }),
+  });
   latestDashboard.session = session;
   renderSession(session);
   setStatus(t("started"), "online");
@@ -1180,7 +1225,11 @@ function removeSlot(index) {
   if (draftSessionConfig.slots.length <= 0) {
     return;
   }
+  const removedSlotId = draftSessionConfig.slots[index]?.slotId;
   draftSessionConfig.slots.splice(index, 1);
+  if (removedSlotId) {
+    updateSlotSecret(removedSlotId, "");
+  }
   latestDashboard.session.config = clone(draftSessionConfig);
   sessionDirty = true;
   renderSession(latestDashboard.session);
@@ -1220,6 +1269,7 @@ async function testSlotConnection(index) {
         baseUrl: slot.baseUrl,
         model: slot.model,
         apiKeyEnv: slot.apiKeyEnv,
+        apiKey: slotSecret(slot.slotId) || null,
       }),
     });
     integrationChecks = {
@@ -1284,6 +1334,16 @@ function bind() {
   });
   el.slotEditor.addEventListener("input", () => {
     sessionDirty = true;
+    const activeSlot = document.activeElement?.closest?.("[data-slot-index]");
+    if (activeSlot) {
+      const slotIndex = Number(activeSlot.dataset.slotIndex);
+      const sourceSlot =
+        draftSessionConfig?.slots?.[slotIndex] || latestDashboard?.session?.config?.slots?.[slotIndex];
+      const directKeyField = activeSlot.querySelector('[data-field="apiKeyDirect"]');
+      if (sourceSlot && directKeyField) {
+        updateSlotSecret(sourceSlot.slotId, directKeyField.value || "");
+      }
+    }
     refreshDraftFromDom();
   });
   el.slotEditor.addEventListener("change", () => {

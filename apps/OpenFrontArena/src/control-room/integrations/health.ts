@@ -51,7 +51,7 @@ export async function checkOpenAICompatibleIntegration(input: {
         summary: "Authentification refusee",
         detail:
           input.backend === "remote_api"
-            ? "La cle API ou sa variable d'environnement semble invalide."
+            ? "La cle API directe ou la variable d'environnement semble invalide."
             : "Le serveur local demande une authentification non attendue.",
         checkedAt,
       };
