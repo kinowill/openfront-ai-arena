@@ -377,15 +377,23 @@ function findSpawnActions(
   }
 
   const candidates: Array<{ tile: number; score: number }> = [];
-  game.forEachTile((tile) => {
-    if (!canUseSpawnCenter(game, tile)) {
-      return;
+  const width = game.width();
+  const height = game.height();
+  const targetSamples = 160;
+  const stride = Math.max(3, Math.floor(Math.sqrt((width * height) / targetSamples)));
+
+  for (let y = 0; y < height; y += stride) {
+    for (let x = 0; x < width; x += stride) {
+      const tile = (game as any).ref(x, y) as number;
+      if (!canUseSpawnCenter(game, tile)) {
+        continue;
+      }
+      candidates.push({
+        tile,
+        score: spawnCandidateScore(game, tile),
+      });
     }
-    candidates.push({
-      tile,
-      score: spawnCandidateScore(game, tile),
-    });
-  });
+  }
 
   return candidates
     .sort((a, b) => b.score - a.score)

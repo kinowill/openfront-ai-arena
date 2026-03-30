@@ -53,6 +53,8 @@ export class HeadlessBotClient {
   private joinResolve: (() => void) | null = null;
   private joinReject: ((error: Error) => void) | null = null;
   private joinedLobby = false;
+  private playInFlight = false;
+  private playQueued = false;
 
   constructor(private readonly options: HeadlessBotClientOptions) {}
 
@@ -241,7 +243,7 @@ export class HeadlessBotClient {
       backlog: message.turns.length,
     });
 
-    await this.playCurrentTurn();
+    await this.runPlayLoop();
     await this.debug("start_first_play_completed", {
       latestTurn: this.latestTurn,
     });
@@ -255,7 +257,24 @@ export class HeadlessBotClient {
     this.runner.addTurn(turn);
     this.runner.executeNextTick();
     this.latestTurn = turn.turnNumber;
-    await this.playCurrentTurn();
+    await this.runPlayLoop();
+  }
+
+  private async runPlayLoop(): Promise<void> {
+    if (this.playInFlight) {
+      this.playQueued = true;
+      return;
+    }
+
+    this.playInFlight = true;
+    try {
+      do {
+        this.playQueued = false;
+        await this.playCurrentTurn();
+      } while (this.playQueued);
+    } finally {
+      this.playInFlight = false;
+    }
   }
 
   private async playCurrentTurn(): Promise<void> {
@@ -312,6 +331,35 @@ export class HeadlessBotClient {
       validActions: observation.validActions.length,
       spawned: observation.player.spawned,
     });
+
+    if (!player.hasSpawned()) {
+      const spawnAction = observation.validActions.find((action) => action.type === "spawn");
+      if (!spawnAction) {
+        await this.debug("intent_skipped", {
+          tick: observation.match.tick,
+          selectedActionType: "no_spawn_action_available",
+        });
+        return;
+      }
+
+      const spawnIntent = buildIntentFromValidAction(
+        spawnAction,
+        player,
+        game,
+      );
+      if (spawnIntent) {
+        await this.send({
+          type: "intent",
+          intent: spawnIntent,
+        });
+        await this.debug("intent_sent", {
+          tick: observation.match.tick,
+          intentType: spawnIntent.type,
+          forced: true,
+        });
+      }
+      return;
+    }
 
     const runtimeDecision = await this.options.bot.decide(observation, {
       tick: observation.match.tick,
