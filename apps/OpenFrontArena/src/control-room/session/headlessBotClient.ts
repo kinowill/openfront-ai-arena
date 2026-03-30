@@ -259,6 +259,10 @@ export class HeadlessBotClient {
   }
 
   private async playCurrentTurn(): Promise<void> {
+    await this.debug("play_begin", {
+      hasRunner: Boolean(this.runner),
+      assignedClientId: this.assignedClientId,
+    });
     if (!this.runner || !this.assignedClientId) {
       await this.debug("play_skipped", {
         reason: !this.runner ? "no_runner" : "no_assigned_client_id",
@@ -267,6 +271,9 @@ export class HeadlessBotClient {
     }
 
     const game = this.runner.game;
+    await this.debug("play_game_loaded", {
+      tick: game.ticks(),
+    });
     const player = game.playerByClientID(this.assignedClientId);
     if (!player) {
       await this.debug("play_skipped", {
@@ -282,6 +289,11 @@ export class HeadlessBotClient {
       });
       return;
     }
+    await this.debug("play_player_ready", {
+      playerId: player.id(),
+      alive: player.isAlive(),
+      spawned: player.hasSpawned(),
+    });
 
     this.options.matchRef.tick = game.ticks();
     this.options.matchRef.phase = game.inSpawnPhase() ? "spawn" : "early";
@@ -294,6 +306,11 @@ export class HeadlessBotClient {
         mapVersion: `${this.options.matchRef.mapName}@openfrontio`,
         rulesVersion: "openfront-rules-1",
       },
+    });
+    await this.debug("play_observation_ready", {
+      tick: observation.match.tick,
+      validActions: observation.validActions.length,
+      spawned: observation.player.spawned,
     });
 
     const runtimeDecision = await this.options.bot.decide(observation, {
