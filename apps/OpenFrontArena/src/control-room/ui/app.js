@@ -1350,9 +1350,28 @@ function renderDashboard(payload) {
   } else {
     draftSessionConfig = clone(payload.session.config);
   }
+
+  const active = document.activeElement;
+  const isEditingSession =
+    sessionDirty &&
+    active instanceof HTMLElement &&
+    (
+      el.slotEditor.contains(active) ||
+      active === el.mapInput ||
+      active === el.modeInput ||
+      active === el.teamCountInput ||
+      active === el.tickDelayInput ||
+      active === el.maxTicksInput ||
+      active === el.infiniteGoldInput ||
+      active === el.infiniteTroopsInput ||
+      active === el.instantBuildInput
+    );
+
   latestDashboard = payload;
   renderControlRoom(payload.controlRoom);
-  renderSession(payload.session);
+  if (!isEditingSession) {
+    renderSession(payload.session);
+  }
 }
 
 async function loadInitialState() {
