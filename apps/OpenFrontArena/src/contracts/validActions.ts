@@ -10,6 +10,7 @@ import type {
 export const VALID_ACTIONS_VERSION = "1.0.0";
 
 export type ValidActionType =
+  | "spawn"
   | "wait"
   | "expand"
   | "attack_land"
@@ -35,6 +36,11 @@ export interface ValidActionBase {
 
 export interface WaitAction extends ValidActionBase {
   type: "wait";
+}
+
+export interface SpawnAction extends ValidActionBase {
+  type: "spawn";
+  targetTile: TileRef;
 }
 
 export interface ExpandAction extends ValidActionBase {
@@ -110,6 +116,7 @@ export interface DonateTroopsAction extends ValidActionBase {
 }
 
 export type ValidAction =
+  | SpawnAction
   | WaitAction
   | ExpandAction
   | AttackLandAction

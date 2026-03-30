@@ -204,7 +204,10 @@ export class HeadlessBotClient {
 
     const game = this.runner.game;
     const player = game.playerByClientID(this.assignedClientId);
-    if (!player || !player.isAlive() || !player.hasSpawned()) {
+    if (!player) {
+      return;
+    }
+    if (player.hasSpawned() && !player.isAlive()) {
       return;
     }
 

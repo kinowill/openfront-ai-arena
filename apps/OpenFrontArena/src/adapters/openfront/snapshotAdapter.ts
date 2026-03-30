@@ -26,6 +26,7 @@ import {
   VALID_ACTIONS_VERSION,
   type ValidAction,
 } from "../../contracts/validActions";
+import { getSpawnTiles } from "../../../../OpenFrontIO/src/core/execution/Util";
 import type {
   BotObservationProducer,
   ControlRoomStateProducer,
@@ -326,6 +327,81 @@ function findUpgradeActions(player: OpenFrontPlayer): ValidAction[] {
     deduped.set(action.id, action);
   }
   return Array.from(deduped.values()).slice(0, 5);
+}
+
+function canUseSpawnCenter(game: OpenFrontGame, tile: number): boolean {
+  if (!game.isLand(tile) || game.hasOwner(tile) || game.hasFallout(tile)) {
+    return false;
+  }
+
+  if ((game as any).isBorder?.(tile)) {
+    return false;
+  }
+
+  if (getSpawnTiles(game as any, tile, true) === null) {
+    return false;
+  }
+
+  const minDistanceBetweenPlayers =
+    (game as any).config?.().minDistanceBetweenPlayers?.() ?? 0;
+  const otherPlayers: Array<{ spawnTile(): number | undefined; id(): string | null }> =
+    (game as any).allPlayers?.() ?? [];
+
+  for (const otherPlayer of otherPlayers) {
+    const spawnTile = otherPlayer.spawnTile();
+    if (spawnTile === undefined) {
+      continue;
+    }
+    if (game.manhattanDist(spawnTile, tile) < minDistanceBetweenPlayers) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function spawnCandidateScore(game: OpenFrontGame, tile: number): number {
+  const landNeighbors = game
+    .neighbors(tile)
+    .filter((neighborTile) => game.isLand(neighborTile)).length;
+  const inlandBonus = game.isOceanShore(tile) ? 0 : 2;
+  return landNeighbors + inlandBonus;
+}
+
+function findSpawnActions(
+  game: OpenFrontGame,
+  player: OpenFrontPlayer,
+): ValidAction[] {
+  if (player.hasSpawned()) {
+    return [];
+  }
+
+  const candidates: Array<{ tile: number; score: number }> = [];
+  game.forEachTile((tile) => {
+    if (!canUseSpawnCenter(game, tile)) {
+      return;
+    }
+    candidates.push({
+      tile,
+      score: spawnCandidateScore(game, tile),
+    });
+  });
+
+  return candidates
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 6)
+    .map((candidate) => ({
+      id: `spawn_${candidate.tile}`,
+      type: "spawn",
+      label: `Spawn at tile ${candidate.tile}`,
+      targetTile: candidate.tile,
+      notes: [
+        "Valid initial spawn center on the current map.",
+        game.isOceanShore(candidate.tile)
+          ? "Coastal spawn candidate."
+          : "Inland spawn candidate.",
+      ],
+    }));
 }
 
 function findExpandActions(
@@ -1053,6 +1129,13 @@ export class OpenFrontValidActionProducer
     input: OpenFrontAdapterDependencies<OpenFrontGame, OpenFrontPlayer>,
   ): ValidAction[] {
     const { game, player } = input;
+    const spawnActions = findSpawnActions(game, player);
+    if (!player.hasSpawned()) {
+      return [
+        ...emptyValidActions(),
+        ...spawnActions,
+      ];
+    }
     const actions = [
       ...emptyValidActions(),
       ...findExpandActions(game, player),

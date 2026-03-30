@@ -39,6 +39,11 @@ function scoreActionAgainstProfile(
     reasons.push(`profile_weight:${action.type}=${weighted.toFixed(2)}`);
   }
 
+  if (!observation.player.spawned && action.type === "spawn") {
+    score += 0.4;
+    reasons.push("must_spawn_to_enter_match");
+  }
+
   if (observation.threats.length > 0) {
     const majorThreat = observation.threats[0];
     if (

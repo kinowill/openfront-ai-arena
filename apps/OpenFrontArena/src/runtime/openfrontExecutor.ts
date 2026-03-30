@@ -5,6 +5,7 @@ import { AttackExecution } from "../../../OpenFrontIO/src/core/execution/AttackE
 import { ConstructionExecution } from "../../../OpenFrontIO/src/core/execution/ConstructionExecution";
 import { DonateGoldExecution } from "../../../OpenFrontIO/src/core/execution/DonateGoldExecution";
 import { DonateTroopsExecution } from "../../../OpenFrontIO/src/core/execution/DonateTroopExecution";
+import { SpawnExecution } from "../../../OpenFrontIO/src/core/execution/SpawnExecution";
 import { TargetPlayerExecution } from "../../../OpenFrontIO/src/core/execution/TargetPlayerExecution";
 import { TransportShipExecution } from "../../../OpenFrontIO/src/core/execution/TransportShipExecution";
 import { UpgradeStructureExecution } from "../../../OpenFrontIO/src/core/execution/UpgradeStructureExecution";
@@ -60,6 +61,18 @@ export class OpenFrontActionExecutor {
   execute(player: Player, action: ValidAction): OpenFrontExecutionResult {
     try {
       switch (action.type) {
+        case "spawn":
+          this.game.addExecution(
+            new SpawnExecution("local-harness", player.info(), action.targetTile),
+          );
+          advanceTicks(this.game, 1);
+          return {
+            accepted: true,
+            executedActionId: action.id,
+            summary: `Spawn queued at tile ${action.targetTile}.`,
+            ticksAdvanced: 1,
+            executionKind: "spawn",
+          };
         case "wait":
           advanceTicks(this.game, 1);
           return {

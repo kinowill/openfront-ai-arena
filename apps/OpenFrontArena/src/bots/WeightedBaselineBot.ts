@@ -12,6 +12,8 @@ type ActionTypeWeights = Partial<Record<ValidActionType, number>>;
 
 function strategicGoalFromAction(action: ValidAction): string {
   switch (action.type) {
+    case "spawn":
+      return "enter_match";
     case "expand":
       return "expand";
     case "attack_land":

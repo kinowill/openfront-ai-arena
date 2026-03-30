@@ -252,6 +252,11 @@ export function buildIntentFromValidAction(
   },
 ): Intent | null {
   switch (action.type) {
+    case "spawn":
+      return {
+        type: "spawn",
+        tile: action.targetTile,
+      };
     case "wait":
       return null;
     case "expand":
