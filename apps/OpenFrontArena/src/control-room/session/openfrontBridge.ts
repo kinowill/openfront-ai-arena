@@ -137,7 +137,7 @@ export function buildPrivateLobbyConfig(params: {
     infiniteGold: params.infiniteGold,
     infiniteTroops: params.infiniteTroops,
     instantBuild: params.instantBuild,
-    randomSpawn: true,
+    randomSpawn: false,
     maxPlayers: params.maxPlayers,
     disabledUnits: [],
   };
