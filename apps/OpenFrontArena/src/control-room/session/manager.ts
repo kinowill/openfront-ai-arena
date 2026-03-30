@@ -99,6 +99,10 @@ function capabilities(): ControlRoomCapabilities {
 
 function sanitizeSlot(slot: ControlRoomSlotConfig, index: number): ControlRoomSlotConfig {
   const preset =
+    slot.preset === "greedy_expand" ||
+    slot.preset === "aggressive_frontline" ||
+    slot.preset === "economic_growth" ||
+    slot.preset === "naval_pressure" ||
     slot.preset === "local_llm" ||
     slot.preset === "remote_api" ||
     slot.preset === "human_operator"

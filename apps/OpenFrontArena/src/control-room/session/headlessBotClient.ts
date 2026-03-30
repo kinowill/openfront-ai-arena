@@ -59,8 +59,22 @@ export class HeadlessBotClient {
   private runnerBroken = false;
   private lastActedTick = -1;
   private lastIntentSentAt = 0;
+  private lastDecisionTick = -1;
 
   constructor(private readonly options: HeadlessBotClientOptions) {}
+
+  private decisionTickGap(): number {
+    switch (this.options.bot.identity.backend) {
+      case "rule_based":
+        return 8;
+      case "remote_api":
+        return 30;
+      case "local_llm":
+        return 45;
+      default:
+        return 12;
+    }
+  }
 
   private async debug(event: string, payload: Record<string, unknown> = {}): Promise<void> {
     if (!this.options.debugLogPath) {
@@ -378,6 +392,20 @@ export class HeadlessBotClient {
       spawned: player.hasSpawned(),
     });
 
+    if (
+      player.hasSpawned() &&
+      this.lastDecisionTick >= 0 &&
+      game.ticks() < this.lastDecisionTick + this.decisionTickGap()
+    ) {
+      await this.debug("play_skipped", {
+        reason: "decision_cooldown",
+        tick: game.ticks(),
+        lastDecisionTick: this.lastDecisionTick,
+        decisionTickGap: this.decisionTickGap(),
+      });
+      return;
+    }
+
     this.options.matchRef.tick = game.ticks();
     this.options.matchRef.phase = game.inSpawnPhase() ? "spawn" : "early";
 
@@ -492,6 +520,7 @@ export class HeadlessBotClient {
         type: "intent",
         intent,
       });
+      this.lastDecisionTick = observation.match.tick;
       if (sent) {
         this.lastActedTick = observation.match.tick;
         await this.debug("intent_sent", {
@@ -500,6 +529,7 @@ export class HeadlessBotClient {
         });
       }
     } else {
+      this.lastDecisionTick = observation.match.tick;
       await this.debug("intent_skipped", {
         tick: observation.match.tick,
         selectedActionType: arbitration.executedAction.type,
