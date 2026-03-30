@@ -483,6 +483,10 @@ function findNavalAttackActions(
   game: OpenFrontGame,
   player: OpenFrontPlayer,
 ): ValidAction[] {
+  if (player.unitsOwned(UNIT_PORT) === 0) {
+    return [];
+  }
+
   const actions: ValidAction[] = [];
   const seenTargets = new Set<number>();
   const hostileNeighborIds = new Set(
@@ -493,27 +497,40 @@ function findNavalAttackActions(
       .map((neighbor) => neighbor.id()),
   );
 
-  game.forEachTile((tile) => {
+  const candidateTiles = new Set<number>();
+  for (const borderTile of player.borderTiles()) {
+    if (!game.isOceanShore(borderTile)) {
+      continue;
+    }
+    for (const neighborTile of game.neighbors(borderTile)) {
+      candidateTiles.add(neighborTile);
+      for (const secondRingTile of game.neighbors(neighborTile)) {
+        candidateTiles.add(secondRingTile);
+      }
+    }
+  }
+
+  for (const tile of candidateTiles) {
     if (actions.length >= 3) {
-      return;
+      break;
     }
     if (!game.isLand(tile) || game.hasFallout(tile)) {
-      return;
+      continue;
     }
 
     const owner = game.owner(tile);
     if (isPlayer(owner)) {
       if (owner.id() === player.id()) {
-        return;
+        continue;
       }
       if (player.isFriendly(owner) || hostileNeighborIds.has(owner.id())) {
-        return;
+        continue;
       }
     }
 
     const launchTile = player.canBuild(UNIT_TRANSPORT, tile);
     if (launchTile === false || seenTargets.has(tile)) {
-      return;
+      continue;
     }
 
     seenTargets.add(tile);
@@ -543,35 +560,17 @@ function findNavalAttackActions(
             targetPlayerId: "terra_nullius",
           },
     );
-  });
+  }
 
   return actions;
 }
 
 function hasNavalProjectionToPlayer(
-  game: OpenFrontGame,
+  _game: OpenFrontGame,
   player: OpenFrontPlayer,
   target: OpenFrontPlayer,
 ): boolean {
-  let reachable = false;
-
-  game.forEachTile((tile) => {
-    if (reachable || !game.isLand(tile) || game.hasFallout(tile)) {
-      return;
-    }
-
-    const owner = game.owner(tile);
-    if (!isPlayer(owner) || owner.id() !== target.id()) {
-      return;
-    }
-
-    const launchTile = player.canBuild(UNIT_TRANSPORT, tile);
-    if (launchTile !== false) {
-      reachable = true;
-    }
-  });
-
-  return reachable;
+  return player.unitsOwned(UNIT_PORT) > 0 && target.unitsOwned(UNIT_PORT) > 0;
 }
 
 function reachabilityForNeighbor(

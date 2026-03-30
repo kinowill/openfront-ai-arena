@@ -348,14 +348,34 @@ export class HeadlessBotClient {
     this.options.matchRef.tick = game.ticks();
     this.options.matchRef.phase = game.inSpawnPhase() ? "spawn" : "early";
 
-    const observation = this.snapshotAdapter.produce({
-      game: game as any,
-      player: player as any,
-      context: {
-        match: this.options.matchRef,
-        mapVersion: `${this.options.matchRef.mapName}@openfrontio`,
-        rulesVersion: "openfront-rules-1",
-      },
+    const produceStartedAt = Date.now();
+    await this.debug("produce_begin", {
+      tick: game.ticks(),
+      spawned: player.hasSpawned(),
+    });
+    let observation;
+    try {
+      observation = this.snapshotAdapter.produce({
+        game: game as any,
+        player: player as any,
+        context: {
+          match: this.options.matchRef,
+          mapVersion: `${this.options.matchRef.mapName}@openfrontio`,
+          rulesVersion: "openfront-rules-1",
+        },
+      });
+    } catch (error) {
+      await this.debug("produce_error", {
+        tick: game.ticks(),
+        spawned: player.hasSpawned(),
+        error: error instanceof Error ? error.message : "unknown error",
+      });
+      throw error;
+    }
+    await this.debug("produce_done", {
+      tick: observation.match.tick,
+      spawned: observation.player.spawned,
+      durationMs: Date.now() - produceStartedAt,
     });
     await this.debug("play_observation_ready", {
       tick: observation.match.tick,
