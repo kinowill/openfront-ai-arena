@@ -500,6 +500,16 @@ export class HeadlessBotClient {
       observation,
       observation.match.tick,
     );
+    const latestKnownTick = Math.max(this.latestTurn, game.ticks());
+    if (latestKnownTick > observation.match.tick) {
+      await this.debug("decision_skipped", {
+        tick: observation.match.tick,
+        reason: "stale_observation",
+        latestKnownTick,
+      });
+      this.lastDecisionTick = latestKnownTick;
+      return;
+    }
     const arbitration = arbitrateDecision(observation, runtimeDecision.decision);
     await this.debug("decision", {
       tick: observation.match.tick,

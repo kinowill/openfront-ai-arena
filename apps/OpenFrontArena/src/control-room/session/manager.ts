@@ -478,6 +478,8 @@ export class ControlRoomSessionManager {
           throw new Error(`slot ${slot.label}: local_llm requires a model`);
         }
         return new LocalLlmBot({
+          identityId: `${slot.slotId}_local_llm_${model}`,
+          displayName: slot.label,
           model,
           baseUrl: slot.baseUrl ?? process.env.OPENFRONT_BOTS_LOCAL_LLM_BASE_URL,
         });
@@ -495,6 +497,7 @@ export class ControlRoomSessionManager {
           );
         }
         return new RemoteApiBot({
+          identityId: `${slot.slotId}_remote_api_${model}`,
           model,
           baseUrl,
           apiKey,

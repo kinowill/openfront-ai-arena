@@ -1,6 +1,8 @@
 import { OpenAICompatibleBot } from "./openaiCompatible";
 
 export interface LocalLlmBotOptions {
+  identityId?: string;
+  displayName?: string;
   model: string;
   baseUrl?: string;
   systemPrompt?: string;
@@ -10,8 +12,8 @@ export class LocalLlmBot extends OpenAICompatibleBot {
   constructor(options: LocalLlmBotOptions) {
     super({
       identity: {
-        id: `local-llm-${options.model}`,
-        displayName: `LocalLlm(${options.model})`,
+        id: options.identityId ?? `local-llm-${options.model}`,
+        displayName: options.displayName ?? `LocalLlm(${options.model})`,
         backend: "local_llm",
         version: "1.0.0",
       },

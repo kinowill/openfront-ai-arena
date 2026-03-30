@@ -1,6 +1,7 @@
 import { OpenAICompatibleBot } from "./openaiCompatible";
 
 export interface RemoteApiBotOptions {
+  identityId?: string;
   model: string;
   baseUrl: string;
   apiKey: string;
@@ -12,7 +13,7 @@ export class RemoteApiBot extends OpenAICompatibleBot {
   constructor(options: RemoteApiBotOptions) {
     super({
       identity: {
-        id: `remote-api-${options.model}`,
+        id: options.identityId ?? `remote-api-${options.model}`,
         displayName: options.displayName ?? `RemoteApi(${options.model})`,
         backend: "remote_api",
         version: "1.0.0",
