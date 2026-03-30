@@ -97,19 +97,34 @@ function capabilities(): ControlRoomCapabilities {
 }
 
 function sanitizeSlot(slot: ControlRoomSlotConfig, index: number): ControlRoomSlotConfig {
+  const preset =
+    slot.preset === "local_llm" ||
+    slot.preset === "remote_api" ||
+    slot.preset === "human_operator"
+      ? slot.preset
+      : "greedy_expand";
+  const secretMode =
+    preset === "remote_api" && (slot.secretMode === "env" || slot.secretMode === "direct" || slot.secretMode === "vault")
+      ? slot.secretMode
+      : preset === "remote_api"
+        ? slot.secretRef?.trim()
+          ? "vault"
+          : slot.apiKeyEnv?.trim()
+            ? "env"
+            : "direct"
+        : null;
+
   return {
     slotId: slot.slotId || `slot_${index + 1}`,
     enabled: Boolean(slot.enabled),
     label: slot.label?.trim() || `Slot ${index + 1}`,
     slotKind: slot.slotKind === "human_reserved" ? "human_reserved" : "bot",
-    preset:
-      slot.preset === "local_llm" ||
-      slot.preset === "remote_api" ||
-      slot.preset === "human_operator"
-        ? slot.preset
-        : "greedy_expand",
+    preset,
+    providerPreset: slot.providerPreset?.trim() || null,
     model: slot.model?.trim() || null,
     baseUrl: slot.baseUrl?.trim() || null,
+    secretMode,
+    secretRef: preset === "remote_api" ? slot.secretRef?.trim() || null : null,
     apiKeyEnv: slot.apiKeyEnv?.trim() || null,
     teamPreference:
       slot.teamPreference && TEAM_COLORS.includes(slot.teamPreference as (typeof TEAM_COLORS)[number])

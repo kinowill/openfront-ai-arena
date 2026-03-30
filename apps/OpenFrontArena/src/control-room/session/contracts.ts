@@ -15,8 +15,11 @@ export interface ControlRoomSlotConfig {
   label: string;
   slotKind: ControlRoomSlotKind;
   preset: ControlRoomBotPreset;
+  providerPreset: string | null;
   model: string | null;
   baseUrl: string | null;
+  secretMode: "env" | "direct" | "vault" | null;
+  secretRef: string | null;
   apiKeyEnv: string | null;
   teamPreference: string | null;
 }

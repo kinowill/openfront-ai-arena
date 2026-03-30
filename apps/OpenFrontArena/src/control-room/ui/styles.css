@@ -282,6 +282,12 @@ h3 { font-size: 1rem; font-weight: 600; }
   color: var(--text-muted);
 }
 
+.slot-inline-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .col-span-full {
   grid-column: 1 / -1;
 }

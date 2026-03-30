@@ -93,10 +93,33 @@ const I18N = {
     slot_name: "Nom",
     slot_type: "Type",
     slot_model: "Modele",
+    slot_provider: "Preset provider",
     slot_base_url: "Base URL",
     slot_api_env: "Variable API key",
     slot_api_key_direct: "Cle API directe",
     slot_api_or: "ou",
+    slot_secret_mode: "Source secret",
+    secret_mode_direct: "Cle directe locale",
+    secret_mode_vault: "Secret chiffre",
+    secret_mode_env: "Variable d'environnement",
+    slot_secret_pick: "Secret enregistre",
+    vault_locked: "Coffre verrouille",
+    vault_unlocked: "Coffre deverrouille",
+    vault_unlock: "Deverrouiller",
+    vault_lock: "Verrouiller",
+    vault_save_secret: "Sauver dans le coffre",
+    vault_delete_secret: "Supprimer le secret",
+    vault_empty: "Aucun secret enregistre",
+    field_provider_hint_remote: "Choisis un provider ou passe en Custom",
+    field_provider_hint_local: "LM Studio, Ollama ou autre endpoint local",
+    field_secret_mode_hint_remote: "Direct, coffre chiffre ou env var",
+    field_secret_pick_hint_remote: "Selection du secret chiffre local",
+    direct_secret_saved: "Cle locale mise a jour",
+    vault_secret_saved: "Secret chiffre enregistre",
+    vault_secret_deleted: "Secret chiffre supprime",
+    vault_unlock_failed: "Impossible de deverrouiller le coffre",
+    vault_secret_missing: "Le secret chiffre selectionne est indisponible",
+    vault_secret_required: "Le secret chiffre doit etre deverrouille avant test ou lancement",
     field_bot_batch: "Bots en masse",
     add_bot: "Ajouter un bot",
     add_human: "Ajouter un humain",
@@ -126,7 +149,7 @@ const I18N = {
     bot_help_local:
       "Local LLM : mets l'URL de ton serveur OpenAI-compatible local et le nom du modele. Exemple typique : base URL LM Studio ou vLLM local.",
     bot_help_remote:
-      "Remote API : mets l'URL de l'API compatible OpenAI, le nom du modele, puis soit une cle API directe gardee localement dans le navigateur, soit un nom de variable d'environnement.",
+      "Remote API : mets l'URL de l'API compatible OpenAI, le nom du modele, puis choisis soit une cle directe locale, soit un secret chiffre local, soit une variable d'environnement.",
     bot_help_human:
       "Human operator reserve une place humaine. Aucun modele ni URL n'est requis.",
     field_model_hint_local: "Exemple : qwen2.5-7b-instruct",
@@ -212,10 +235,33 @@ const I18N = {
     slot_name: "Name",
     slot_type: "Type",
     slot_model: "Model",
+    slot_provider: "Provider preset",
     slot_base_url: "Base URL",
     slot_api_env: "API key env var",
     slot_api_key_direct: "Direct API key",
     slot_api_or: "or",
+    slot_secret_mode: "Secret source",
+    secret_mode_direct: "Local direct key",
+    secret_mode_vault: "Encrypted secret",
+    secret_mode_env: "Environment variable",
+    slot_secret_pick: "Saved secret",
+    vault_locked: "Vault locked",
+    vault_unlocked: "Vault unlocked",
+    vault_unlock: "Unlock",
+    vault_lock: "Lock",
+    vault_save_secret: "Save to vault",
+    vault_delete_secret: "Delete secret",
+    vault_empty: "No saved secrets",
+    field_provider_hint_remote: "Choose a provider or switch to Custom",
+    field_provider_hint_local: "LM Studio, Ollama, or another local endpoint",
+    field_secret_mode_hint_remote: "Direct, encrypted vault, or env var",
+    field_secret_pick_hint_remote: "Select a locally encrypted secret",
+    direct_secret_saved: "Local key updated",
+    vault_secret_saved: "Encrypted secret saved",
+    vault_secret_deleted: "Encrypted secret deleted",
+    vault_unlock_failed: "Could not unlock vault",
+    vault_secret_missing: "The selected encrypted secret is unavailable",
+    vault_secret_required: "Unlock the encrypted secret before testing or launching",
     field_bot_batch: "Bulk bots",
     add_bot: "Add bot",
     add_human: "Add human",
@@ -245,7 +291,7 @@ const I18N = {
     bot_help_local:
       "Local LLM: enter your local OpenAI-compatible server URL and the model name. Typical examples include LM Studio, Ollama with an OpenAI bridge, or a local vLLM endpoint.",
     bot_help_remote:
-      "Remote API: enter the OpenAI-compatible API URL, the model name, then either a direct API key kept locally in the browser or the environment variable name that stores it.",
+      "Remote API: enter the OpenAI-compatible API URL, the model name, then choose either a local direct key, a local encrypted secret, or the environment variable name that stores it.",
     bot_help_human:
       "Human operator reserves a human seat. No model or URL is required.",
     field_model_hint_local: "Example: qwen2.5-7b-instruct",
@@ -306,6 +352,25 @@ const TEAM_COLORS = [
   { id: "Orange", hex: "#f97316", labelKey: "team_orange" },
   { id: "Green", hex: "#22c55e", labelKey: "team_green" },
 ];
+const DIRECT_SECRET_STORAGE_KEY = "openfront.controlRoom.directSecrets.v1";
+const VAULT_STORAGE_KEY = "openfront.controlRoom.secretVault.v1";
+const VAULT_PBKDF2_ITERATIONS = 200000;
+const LOCAL_PROVIDER_PRESETS = [
+  { id: "lm_studio", label: "LM Studio local", baseUrl: "http://127.0.0.1:1234/v1" },
+  { id: "ollama", label: "Ollama OpenAI", baseUrl: "http://127.0.0.1:11434/v1" },
+  { id: "vllm", label: "vLLM local", baseUrl: "http://127.0.0.1:8000/v1" },
+  { id: "custom", label: "Custom", baseUrl: null },
+];
+const REMOTE_PROVIDER_PRESETS = [
+  { id: "openai", label: "OpenAI", baseUrl: "https://api.openai.com/v1" },
+  { id: "mistral", label: "Mistral", baseUrl: "https://api.mistral.ai/v1" },
+  { id: "openrouter", label: "OpenRouter", baseUrl: "https://openrouter.ai/api/v1" },
+  { id: "deepseek", label: "DeepSeek", baseUrl: "https://api.deepseek.com/v1" },
+  { id: "groq", label: "Groq", baseUrl: "https://api.groq.com/openai/v1" },
+  { id: "together", label: "Together", baseUrl: "https://api.together.xyz/v1" },
+  { id: "fireworks", label: "Fireworks", baseUrl: "https://api.fireworks.ai/inference/v1" },
+  { id: "custom", label: "Custom", baseUrl: null },
+];
 
 let currentLang = "fr";
 let latestDashboard = null;
@@ -314,6 +379,13 @@ let sessionDirty = false;
 let draftSessionConfig = null;
 let integrationChecks = {};
 let slotApiSecrets = {};
+let slotSecretDrafts = {};
+let vaultState = {
+  store: null,
+  unlocked: false,
+  passphrase: null,
+  secrets: {},
+};
 
 const numberFormat = new Intl.NumberFormat("fr-FR");
 const percentFormat = new Intl.NumberFormat("fr-FR", {
@@ -328,6 +400,23 @@ const timeFormat = new Intl.DateTimeFormat("fr-FR", {
 
 function t(key) {
   return I18N[currentLang][key] || key;
+}
+
+function loadJsonStorage(key, fallback) {
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function saveJsonStorage(key, value) {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Ignore storage quota and private browsing failures.
+  }
 }
 
 function applyI18n() {
@@ -383,6 +472,210 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function providerPresetsFor(slotPreset) {
+  if (slotPreset === "local_llm") return LOCAL_PROVIDER_PRESETS;
+  if (slotPreset === "remote_api") return REMOTE_PROVIDER_PRESETS;
+  return [{ id: "custom", label: "Custom", baseUrl: null }];
+}
+
+function providerPresetBaseUrl(slotPreset, providerPreset) {
+  const preset = providerPresetsFor(slotPreset).find((entry) => entry.id === providerPreset);
+  return preset?.baseUrl ?? null;
+}
+
+function inferProviderPreset(slotPreset, providerPreset, baseUrl) {
+  const presets = providerPresetsFor(slotPreset);
+  if (providerPreset && presets.some((entry) => entry.id === providerPreset)) {
+    return providerPreset;
+  }
+  const normalizedBaseUrl = (baseUrl || "").trim().replace(/\/$/, "");
+  const matchedPreset = presets.find(
+    (entry) => entry.baseUrl && entry.baseUrl.replace(/\/$/, "") === normalizedBaseUrl,
+  );
+  return matchedPreset?.id ?? "custom";
+}
+
+function providerOptionsHtml(slotPreset, selectedValue) {
+  return providerPresetsFor(slotPreset)
+    .map(
+      (provider) =>
+        `<option value="${provider.id}" ${selectedValue === provider.id ? "selected" : ""}>${escapeHtml(provider.label)}</option>`,
+    )
+    .join("");
+}
+
+function randomHex(size = 16) {
+  const bytes = crypto.getRandomValues(new Uint8Array(size));
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function bytesToBase64(bytes) {
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary);
+}
+
+function base64ToBytes(value) {
+  const binary = atob(value);
+  return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+}
+
+async function deriveVaultKey(passphrase, saltBase64) {
+  const material = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(passphrase),
+    "PBKDF2",
+    false,
+    ["deriveKey"],
+  );
+  return crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt: base64ToBytes(saltBase64),
+      iterations: VAULT_PBKDF2_ITERATIONS,
+      hash: "SHA-256",
+    },
+    material,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"],
+  );
+}
+
+async function encryptVaultSecret(secret, passphrase, saltBase64) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveVaultKey(passphrase, saltBase64);
+  const cipherBuffer = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    new TextEncoder().encode(secret),
+  );
+  return {
+    iv: bytesToBase64(iv),
+    ciphertext: bytesToBase64(new Uint8Array(cipherBuffer)),
+  };
+}
+
+async function decryptVaultSecret(entry, passphrase, saltBase64) {
+  const key = await deriveVaultKey(passphrase, saltBase64);
+  const plainBuffer = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: base64ToBytes(entry.iv) },
+    key,
+    base64ToBytes(entry.ciphertext),
+  );
+  return new TextDecoder().decode(plainBuffer);
+}
+
+function loadDirectSecrets() {
+  slotApiSecrets = loadJsonStorage(DIRECT_SECRET_STORAGE_KEY, {});
+}
+
+function persistDirectSecrets() {
+  saveJsonStorage(DIRECT_SECRET_STORAGE_KEY, slotApiSecrets);
+}
+
+function loadVaultStore() {
+  vaultState.store = loadJsonStorage(VAULT_STORAGE_KEY, null);
+}
+
+function persistVaultStore() {
+  if (vaultState.store) {
+    saveJsonStorage(VAULT_STORAGE_KEY, vaultState.store);
+  }
+}
+
+function vaultEntries() {
+  return Object.values(vaultState.store?.entries || {}).sort((left, right) =>
+    (left.label || "").localeCompare(right.label || ""),
+  );
+}
+
+function lockVault() {
+  vaultState = {
+    ...vaultState,
+    unlocked: false,
+    passphrase: null,
+    secrets: {},
+  };
+}
+
+async function ensureVaultUnlocked() {
+  if (vaultState.unlocked && vaultState.passphrase) {
+    return true;
+  }
+
+  const hasExistingVault = Boolean(vaultState.store?.salt);
+  const promptLabel = hasExistingVault
+    ? currentLang === "fr"
+      ? "Passphrase du coffre local"
+      : "Local vault passphrase"
+    : currentLang === "fr"
+      ? "Cree une passphrase pour le coffre local"
+      : "Create a passphrase for the local vault";
+  const passphrase = window.prompt(promptLabel, "");
+  if (!passphrase) {
+    return false;
+  }
+
+  const nextStore =
+    vaultState.store ||
+    {
+      version: 1,
+      salt: bytesToBase64(crypto.getRandomValues(new Uint8Array(16))),
+      entries: {},
+    };
+
+  try {
+    const nextSecrets = {};
+    for (const [secretId, entry] of Object.entries(nextStore.entries || {})) {
+      nextSecrets[secretId] = await decryptVaultSecret(entry, passphrase, nextStore.salt);
+    }
+    vaultState = {
+      store: nextStore,
+      unlocked: true,
+      passphrase,
+      secrets: nextSecrets,
+    };
+    persistVaultStore();
+    return true;
+  } catch {
+    lockVault();
+    setStatus(t("vault_unlock_failed"), "offline");
+    return false;
+  }
+}
+
+async function saveSecretToVault(secretId, label, secret) {
+  if (!secret) return null;
+  const unlocked = await ensureVaultUnlocked();
+  if (!unlocked || !vaultState.store || !vaultState.passphrase) {
+    return null;
+  }
+
+  const targetId = secretId || `vault_${randomHex(8)}`;
+  const encrypted = await encryptVaultSecret(secret, vaultState.passphrase, vaultState.store.salt);
+  vaultState.store.entries[targetId] = {
+    id: targetId,
+    label,
+    updatedAt: new Date().toISOString(),
+    ...encrypted,
+  };
+  vaultState.secrets[targetId] = secret;
+  persistVaultStore();
+  return targetId;
+}
+
+function deleteVaultSecret(secretId) {
+  if (!secretId || !vaultState.store?.entries?.[secretId]) {
+    return;
+  }
+  delete vaultState.store.entries[secretId];
+  delete vaultState.secrets[secretId];
+  persistVaultStore();
 }
 
 function teamChoices(teamCount) {
@@ -489,8 +782,8 @@ function renderControlRoom(controlRoom) {
       model: controlRoom.integrations.remoteApi.model,
       help:
         currentLang === "fr"
-          ? "Pour un slot Remote API : renseigne modèle, base URL et variable d'environnement de clé API."
-          : "For a Remote API slot: provide model, base URL and the API key environment variable.",
+          ? "Pour un slot Remote API : renseigne modele, base URL, puis choisis soit une cle directe locale, soit un secret chiffre, soit une variable d'environnement."
+          : "For a Remote API slot: provide model, base URL, then choose a local direct key, an encrypted secret, or an environment variable.",
     },
   ];
   
@@ -643,12 +936,16 @@ function slotStatus(slot) {
 
 function slotFieldHint(slot, field) {
   if (slot.preset === "local_llm") {
+    if (field === "providerPreset") return t("field_provider_hint_local");
     if (field === "model") return t("field_model_hint_local");
     if (field === "baseUrl") return t("field_base_url_hint_local");
   }
   if (slot.preset === "remote_api") {
+    if (field === "providerPreset") return t("field_provider_hint_remote");
     if (field === "model") return t("field_model_hint_remote");
     if (field === "baseUrl") return t("field_base_url_hint_remote");
+    if (field === "secretMode") return t("field_secret_mode_hint_remote");
+    if (field === "secretRef") return t("field_secret_pick_hint_remote");
     if (field === "apiKeyEnv") return t("field_api_env_hint_remote");
     if (field === "apiKeyDirect") return t("field_api_key_direct_hint_remote");
   }
@@ -745,8 +1042,11 @@ function createSlotDraft(kind = "bot") {
     label: isHuman ? `Humain ${index}` : `Bot ${index}`,
     slotKind: isHuman ? "human_reserved" : "bot",
     preset: isHuman ? "human_operator" : "greedy_expand",
+    providerPreset: null,
     model: null,
     baseUrl: null,
+    secretMode: "direct",
+    secretRef: null,
     apiKeyEnv: null,
     teamPreference: null,
   };
@@ -764,8 +1064,11 @@ function syncSlotShape(slot) {
 
   if (next.slotKind === "human_reserved") {
     next.preset = "human_operator";
+    next.providerPreset = null;
     next.model = null;
     next.baseUrl = null;
+    next.secretMode = null;
+    next.secretRef = null;
     next.apiKeyEnv = null;
   } else if (next.preset === "human_operator") {
     next.preset = "greedy_expand";
@@ -777,13 +1080,32 @@ function syncSlotShape(slot) {
     next.preset === "economic_growth" ||
     next.preset === "naval_pressure"
   ) {
+    next.providerPreset = null;
     next.model = null;
     next.baseUrl = null;
+    next.secretMode = null;
+    next.secretRef = null;
     next.apiKeyEnv = null;
   }
 
   if (next.preset === "local_llm") {
+    next.providerPreset = inferProviderPreset(next.preset, next.providerPreset, next.baseUrl);
     next.apiKeyEnv = null;
+    next.secretMode = null;
+    next.secretRef = null;
+  }
+
+  if (next.preset === "remote_api") {
+    next.providerPreset = inferProviderPreset(next.preset, next.providerPreset, next.baseUrl);
+    if (next.secretMode !== "env" && next.secretMode !== "direct" && next.secretMode !== "vault") {
+      next.secretMode = next.secretRef ? "vault" : next.apiKeyEnv ? "env" : "direct";
+    }
+    if (next.secretMode === "env") {
+      next.secretRef = null;
+    }
+    if (next.secretMode === "direct") {
+      next.secretRef = null;
+    }
   }
 
   if (!next.teamPreference || !TEAM_COLORS.some((team) => team.id === next.teamPreference)) {
@@ -793,23 +1115,54 @@ function syncSlotShape(slot) {
   return next;
 }
 
-function slotSecret(slotId) {
-  return slotApiSecrets[slotId] || "";
+function slotSecret(slot) {
+  if (!slot?.slotId) return "";
+  if (slot.secretMode === "vault") {
+    return slotSecretDrafts[slot.slotId] || vaultState.secrets[slot.secretRef] || "";
+  }
+  return slotApiSecrets[slot.slotId] || "";
 }
 
-function updateSlotSecret(slotId, value) {
+function updateSlotSecret(slotId, value, options = {}) {
   if (!slotId) return;
+  const persist = options.persist !== false;
   if (value) {
-    slotApiSecrets = {
-      ...slotApiSecrets,
-      [slotId]: value,
-    };
+    if (persist) {
+      slotApiSecrets = {
+        ...slotApiSecrets,
+        [slotId]: value,
+      };
+      persistDirectSecrets();
+    } else {
+      slotSecretDrafts = {
+        ...slotSecretDrafts,
+        [slotId]: value,
+      };
+    }
     return;
   }
 
-  const nextSecrets = { ...slotApiSecrets };
-  delete nextSecrets[slotId];
-  slotApiSecrets = nextSecrets;
+  if (persist) {
+    const nextSecrets = { ...slotApiSecrets };
+    delete nextSecrets[slotId];
+    slotApiSecrets = nextSecrets;
+    persistDirectSecrets();
+    return;
+  }
+
+  const nextDrafts = { ...slotSecretDrafts };
+  delete nextDrafts[slotId];
+  slotSecretDrafts = nextDrafts;
+}
+
+function resolveSlotSecret(slot) {
+  if (!slot || slot.preset !== "remote_api") return null;
+  if (slot.secretMode === "env") return null;
+  if (slot.secretMode === "vault") {
+    if (!slot.secretRef) return null;
+    return slotSecretDrafts[slot.slotId] || vaultState.secrets[slot.secretRef] || null;
+  }
+  return slotSecret(slot) || null;
 }
 
 function slotCard(slot, index, config) {
@@ -817,8 +1170,11 @@ function slotCard(slot, index, config) {
   const isHuman = slot.slotKind === "human_reserved";
   const showModel = !isHuman && (slot.preset === "local_llm" || slot.preset === "remote_api");
   const showBaseUrl = !isHuman && (slot.preset === "local_llm" || slot.preset === "remote_api");
-  const showApiKeyEnv = !isHuman && slot.preset === "remote_api";
-  const showApiKeyDirect = !isHuman && slot.preset === "remote_api";
+  const showProviderPreset = !isHuman && (slot.preset === "local_llm" || slot.preset === "remote_api");
+  const showApiKeyEnv = !isHuman && slot.preset === "remote_api" && slot.secretMode === "env";
+  const showApiKeyDirect = !isHuman && slot.preset === "remote_api" && (slot.secretMode === "direct" || slot.secretMode === "vault");
+  const showSecretMode = !isHuman && slot.preset === "remote_api";
+  const showVaultSecret = !isHuman && slot.preset === "remote_api" && slot.secretMode === "vault";
   const showTeamChoice = config.gameMode === "team";
   const teamOptions = teamChoices(config.teamCount)
     .map(
@@ -831,6 +1187,15 @@ function slotCard(slot, index, config) {
   const canRemove = slotCount > 0;
   const canTest = slot.preset === "local_llm" || slot.preset === "remote_api";
   const integrationState = integrationChecks[slot.slotId] || null;
+  const providerPreset = inferProviderPreset(slot.preset, slot.providerPreset, slot.baseUrl);
+  const vaultOptions = vaultEntries()
+    .map(
+      (entry) =>
+        `<option value="${escapeHtml(entry.id)}" ${slot.secretRef === entry.id ? "selected" : ""}>${escapeHtml(entry.label)}</option>`,
+    )
+    .join("");
+  const vaultStatus = vaultState.unlocked ? t("vault_unlocked") : t("vault_locked");
+  const visibleSecretValue = slotSecret(slot);
 
   return `
     <article class="slot-card ${disabledClass}" data-slot-index="${index}">
@@ -880,6 +1245,12 @@ function slotCard(slot, index, config) {
             ${teamOptions}
           </select>
         </div>
+        <div class="form-group" style="${showProviderPreset ? "" : "display:none;"}">
+          <label>${t("slot_provider")} <span class="text-xs font-normal text-muted">(${slotFieldHint(slot, "providerPreset")})</span></label>
+          <select class="input" data-field="providerPreset">
+            ${providerOptionsHtml(slot.preset, providerPreset)}
+          </select>
+        </div>
         
         <div class="form-group" style="${showModel ? '' : 'display:none;'}">
           <label>${t("slot_model")} <span class="text-xs font-normal text-muted">(${slotFieldHint(slot, "model")})</span></label>
@@ -889,13 +1260,30 @@ function slotCard(slot, index, config) {
           <label>${t("slot_base_url")} <span class="text-xs font-normal text-muted">(${slotFieldHint(slot, "baseUrl")})</span></label>
           <input class="input" data-field="baseUrl" type="text" value="${slot.baseUrl || ""}" placeholder="${slot.preset === "remote_api" ? "https://api.openai.com/v1" : "http://127.0.0.1:1234/v1"}" />
         </div>
-        <div class="form-group" style="${showApiKeyEnv ? '' : 'display:none;'}">
-          <label>${t("slot_api_key_direct")} <span class="text-xs font-normal text-muted">(${slotFieldHint(slot, "apiKeyDirect")})</span></label>
-          <input class="input" data-field="apiKeyDirect" type="password" value="${escapeHtml(slotSecret(slot.slotId))}" placeholder="sk-..." autocomplete="off" spellcheck="false" />
+        <div class="form-group" style="${showSecretMode ? "" : "display:none;"}">
+          <label>${t("slot_secret_mode")} <span class="text-xs font-normal text-muted">(${slotFieldHint(slot, "secretMode")})</span></label>
+          <select class="input" data-field="secretMode">
+            <option value="direct" ${slot.secretMode === "direct" ? "selected" : ""}>${t("secret_mode_direct")}</option>
+            <option value="vault" ${slot.secretMode === "vault" ? "selected" : ""}>${t("secret_mode_vault")}</option>
+            <option value="env" ${slot.secretMode === "env" ? "selected" : ""}>${t("secret_mode_env")}</option>
+          </select>
         </div>
-        <div class="form-group" style="${showApiKeyDirect && showApiKeyEnv ? '' : 'display:none;'}">
-          <label>${t("slot_api_or")}</label>
-          <div class="text-xs text-muted">${t("slot_api_env")}</div>
+        <div class="form-group" style="${showApiKeyDirect ? '' : 'display:none;'}">
+          <label>${t("slot_api_key_direct")} <span class="text-xs font-normal text-muted">(${slotFieldHint(slot, "apiKeyDirect")})</span></label>
+          <input class="input" data-field="apiKeyDirect" type="password" value="${escapeHtml(visibleSecretValue)}" placeholder="sk-..." autocomplete="off" spellcheck="false" />
+        </div>
+        <div class="form-group" style="${showVaultSecret ? "" : "display:none;"}">
+          <label>${t("slot_secret_pick")} <span class="text-xs font-normal text-muted">(${slotFieldHint(slot, "secretRef")})</span></label>
+          <select class="input" data-field="secretRef">
+            <option value="">${t("vault_empty")}</option>
+            ${vaultOptions}
+          </select>
+          <div class="slot-inline-actions mt-2">
+            <button class="btn btn-outline btn-sm" data-slot-vault-toggle="${index}" type="button">${vaultState.unlocked ? t("vault_lock") : t("vault_unlock")}</button>
+            <button class="btn btn-secondary btn-sm" data-slot-vault-save="${index}" type="button">${t("vault_save_secret")}</button>
+            <button class="btn btn-ghost btn-sm" data-slot-vault-delete="${index}" type="button" ${slot.secretRef ? "" : "disabled"}>${t("vault_delete_secret")}</button>
+          </div>
+          <div class="text-xs text-muted mt-1">${vaultStatus}</div>
         </div>
         <div class="form-group" style="${showApiKeyEnv ? '' : 'display:none;'}">
           <label>${t("slot_api_env")} <span class="text-xs font-normal text-muted">(${slotFieldHint(slot, "apiKeyEnv")})</span></label>
@@ -1067,15 +1455,21 @@ function collectSessionConfig() {
   const sourceSlots = draftSessionConfig?.slots || latestDashboard.session.config.slots;
   const slots = Array.from(el.slotEditor.querySelectorAll("[data-slot-index]")).map((node, index) => {
     const field = (name) => node.querySelector(`[data-field="${name}"]`);
-    updateSlotSecret(sourceSlots[index].slotId, field("apiKeyDirect")?.value || "");
+    const secretMode = field("secretMode")?.value || sourceSlots[index].secretMode || "direct";
+    updateSlotSecret(sourceSlots[index].slotId, field("apiKeyDirect")?.value || "", {
+      persist: secretMode !== "vault",
+    });
     return syncSlotShape({
       slotId: sourceSlots[index].slotId,
       enabled: field("enabled").checked,
       label: field("label").value,
       slotKind: field("slotKind").value,
       preset: field("preset").value,
+      providerPreset: field("providerPreset")?.value || null,
       model: field("model").value || null,
       baseUrl: field("baseUrl").value || null,
+      secretMode: field("secretMode")?.value || null,
+      secretRef: field("secretRef")?.value || null,
       apiKeyEnv: field("apiKeyEnv").value || null,
       teamPreference: gameMode === "team" ? field("teamPreference")?.value || null : null,
     });
@@ -1123,13 +1517,26 @@ async function saveSession() {
 
 async function startSession() {
   await saveSession();
+  const unresolvedVaultSlot = draftSessionConfig?.slots?.find(
+    (slot) =>
+      slot.enabled &&
+      slot.preset === "remote_api" &&
+      slot.secretMode === "vault" &&
+      !resolveSlotSecret(slot),
+  );
+  if (unresolvedVaultSlot) {
+    setStatus(`${unresolvedVaultSlot.label}: ${t("vault_secret_required")}`, "offline");
+    return;
+  }
   const session = await api("/api/session/start", {
     method: "POST",
     body: JSON.stringify({
-      slotSecrets: Object.entries(slotApiSecrets).map(([slotId, apiKey]) => ({
-        slotId,
-        apiKey,
-      })),
+      slotSecrets: (draftSessionConfig?.slots || [])
+        .map((slot) => ({
+          slotId: slot.slotId,
+          apiKey: resolveSlotSecret(slot),
+        }))
+        .filter((entry) => entry.apiKey),
     }),
   });
   latestDashboard.session = session;
@@ -1229,6 +1636,7 @@ function removeSlot(index) {
   draftSessionConfig.slots.splice(index, 1);
   if (removedSlotId) {
     updateSlotSecret(removedSlotId, "");
+    updateSlotSecret(removedSlotId, "", { persist: false });
   }
   latestDashboard.session.config = clone(draftSessionConfig);
   sessionDirty = true;
@@ -1250,6 +1658,19 @@ async function testSlotConnection(index) {
   const slot = draftSessionConfig?.slots?.[index];
   if (!slot) return;
   if (slot.preset !== "local_llm" && slot.preset !== "remote_api") return;
+  const resolvedApiKey = resolveSlotSecret(slot);
+  if (slot.preset === "remote_api" && slot.secretMode === "vault" && !resolvedApiKey) {
+    integrationChecks = {
+      ...integrationChecks,
+      [slot.slotId]: {
+        pending: false,
+        status: "error",
+        detail: t("vault_secret_required"),
+      },
+    };
+    renderSession(latestDashboard.session);
+    return;
+  }
 
   integrationChecks = {
     ...integrationChecks,
@@ -1269,7 +1690,7 @@ async function testSlotConnection(index) {
         baseUrl: slot.baseUrl,
         model: slot.model,
         apiKeyEnv: slot.apiKeyEnv,
-        apiKey: slotSecret(slot.slotId) || null,
+        apiKey: resolvedApiKey,
       }),
     });
     integrationChecks = {
@@ -1292,6 +1713,97 @@ async function testSlotConnection(index) {
     };
   }
 
+  renderSession(latestDashboard.session);
+}
+
+function applyProviderPresetFromCard(slotCardNode) {
+  if (!slotCardNode) return;
+  const presetField = slotCardNode.querySelector('[data-field="preset"]');
+  const providerField = slotCardNode.querySelector('[data-field="providerPreset"]');
+  const baseUrlField = slotCardNode.querySelector('[data-field="baseUrl"]');
+  if (!presetField || !providerField || !baseUrlField) return;
+
+  const baseUrl = providerPresetBaseUrl(presetField.value, providerField.value);
+  if (baseUrl) {
+    baseUrlField.value = baseUrl;
+  }
+}
+
+function syncProviderSelectionFromBaseUrl(slotCardNode) {
+  if (!slotCardNode) return;
+  const presetField = slotCardNode.querySelector('[data-field="preset"]');
+  const providerField = slotCardNode.querySelector('[data-field="providerPreset"]');
+  const baseUrlField = slotCardNode.querySelector('[data-field="baseUrl"]');
+  if (!presetField || !providerField || !baseUrlField) return;
+  providerField.value = inferProviderPreset(presetField.value, providerField.value, baseUrlField.value);
+}
+
+async function toggleVaultLock() {
+  if (vaultState.unlocked) {
+    lockVault();
+    if (latestDashboard?.session) {
+      renderSession(latestDashboard.session);
+    }
+    return;
+  }
+  const unlocked = await ensureVaultUnlocked();
+  if (unlocked && latestDashboard?.session) {
+    renderSession(latestDashboard.session);
+  }
+}
+
+async function saveSlotSecretToVault(index) {
+  refreshDraftFromDom();
+  const slot = draftSessionConfig?.slots?.[index];
+  if (!slot || slot.preset !== "remote_api") return;
+
+  const secretValue = slotSecret(slot);
+  if (!secretValue) {
+    setStatus(t("vault_secret_missing"), "offline");
+    return;
+  }
+
+  const currentLabel =
+    slot.secretRef && vaultState.store?.entries?.[slot.secretRef]
+      ? vaultState.store.entries[slot.secretRef].label
+      : slot.label;
+  const labelPrompt = currentLang === "fr" ? "Nom du secret chiffre" : "Encrypted secret label";
+  const nextLabel = window.prompt(labelPrompt, currentLabel || slot.label || "Remote API");
+  if (!nextLabel) {
+    return;
+  }
+
+  const secretId = await saveSecretToVault(slot.secretRef, nextLabel.trim(), secretValue);
+  if (!secretId) {
+    return;
+  }
+  updateSlotSecret(slot.slotId, "", { persist: false });
+
+  draftSessionConfig.slots[index] = syncSlotShape({
+    ...slot,
+    secretMode: "vault",
+    secretRef: secretId,
+  });
+  latestDashboard.session.config = clone(draftSessionConfig);
+  sessionDirty = true;
+  setStatus(t("vault_secret_saved"), "stable");
+  renderSession(latestDashboard.session);
+}
+
+function deleteSlotVaultSecret(index) {
+  refreshDraftFromDom();
+  const slot = draftSessionConfig?.slots?.[index];
+  if (!slot?.secretRef) return;
+  deleteVaultSecret(slot.secretRef);
+  updateSlotSecret(slot.slotId, "", { persist: false });
+  draftSessionConfig.slots[index] = syncSlotShape({
+    ...slot,
+    secretMode: "direct",
+    secretRef: null,
+  });
+  latestDashboard.session.config = clone(draftSessionConfig);
+  sessionDirty = true;
+  setStatus(t("vault_secret_deleted"), "stable");
   renderSession(latestDashboard.session);
 }
 
@@ -1341,19 +1853,61 @@ function bind() {
         draftSessionConfig?.slots?.[slotIndex] || latestDashboard?.session?.config?.slots?.[slotIndex];
       const directKeyField = activeSlot.querySelector('[data-field="apiKeyDirect"]');
       if (sourceSlot && directKeyField) {
-        updateSlotSecret(sourceSlot.slotId, directKeyField.value || "");
+        updateSlotSecret(sourceSlot.slotId, directKeyField.value || "", {
+          persist: sourceSlot.secretMode !== "vault",
+        });
+      }
+      const baseUrlField = activeSlot.querySelector('[data-field="baseUrl"]');
+      if (baseUrlField && document.activeElement === baseUrlField) {
+        syncProviderSelectionFromBaseUrl(activeSlot);
       }
     }
     refreshDraftFromDom();
   });
-  el.slotEditor.addEventListener("change", () => {
+  el.slotEditor.addEventListener("change", (event) => {
     sessionDirty = true;
+    const target = event.target;
+    const slotCardNode = target?.closest?.("[data-slot-index]");
+    if (slotCardNode) {
+      if (target.matches?.('[data-field="providerPreset"]')) {
+        applyProviderPresetFromCard(slotCardNode);
+      }
+      if (target.matches?.('[data-field="preset"]')) {
+        const providerField = slotCardNode.querySelector('[data-field="providerPreset"]');
+        if (providerField) {
+          providerField.innerHTML = providerOptionsHtml(target.value, "custom");
+          const fallbackPreset = target.value === "remote_api" ? "openai" : "lm_studio";
+          providerField.value = fallbackPreset;
+          applyProviderPresetFromCard(slotCardNode);
+        }
+        const secretModeField = slotCardNode.querySelector('[data-field="secretMode"]');
+        if (secretModeField && target.value === "remote_api") {
+          secretModeField.value = "direct";
+        }
+      }
+      if (target.matches?.('[data-field="secretMode"]')) {
+        const slotIndex = Number(slotCardNode.dataset.slotIndex);
+        const sourceSlot =
+          draftSessionConfig?.slots?.[slotIndex] || latestDashboard?.session?.config?.slots?.[slotIndex];
+        if (sourceSlot && target.value !== "vault") {
+          updateSlotSecret(sourceSlot.slotId, "", { persist: false });
+        }
+      }
+      if (target.matches?.('[data-field="secretRef"]')) {
+        const slotIndex = Number(slotCardNode.dataset.slotIndex);
+        const sourceSlot =
+          draftSessionConfig?.slots?.[slotIndex] || latestDashboard?.session?.config?.slots?.[slotIndex];
+        if (sourceSlot) {
+          updateSlotSecret(sourceSlot.slotId, "", { persist: false });
+        }
+      }
+    }
     if (latestDashboard?.session) {
       refreshDraftFromDom();
       renderSession(latestDashboard.session);
     }
   });
-  el.slotEditor.addEventListener("click", (event) => {
+  el.slotEditor.addEventListener("click", async (event) => {
     const removeButton = event.target.closest("[data-slot-remove]");
     if (removeButton) {
       removeSlot(Number(removeButton.dataset.slotRemove));
@@ -1362,6 +1916,21 @@ function bind() {
     const testButton = event.target.closest("[data-slot-test]");
     if (testButton) {
       void testSlotConnection(Number(testButton.dataset.slotTest));
+      return;
+    }
+    const vaultToggleButton = event.target.closest("[data-slot-vault-toggle]");
+    if (vaultToggleButton) {
+      await toggleVaultLock();
+      return;
+    }
+    const vaultSaveButton = event.target.closest("[data-slot-vault-save]");
+    if (vaultSaveButton) {
+      await saveSlotSecretToVault(Number(vaultSaveButton.dataset.slotVaultSave));
+      return;
+    }
+    const vaultDeleteButton = event.target.closest("[data-slot-vault-delete]");
+    if (vaultDeleteButton) {
+      deleteSlotVaultSecret(Number(vaultDeleteButton.dataset.slotVaultDelete));
     }
   });
   el.operatorPanel.addEventListener("click", (event) => {
@@ -1461,6 +2030,8 @@ function openEventStream() {
 
 async function bootstrap() {
   applyI18n();
+  loadDirectSecrets();
+  loadVaultStore();
   bind();
   try {
     setStatus(t("loading"), "waiting");
