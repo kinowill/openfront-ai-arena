@@ -154,7 +154,7 @@ const I18N = {
     bot_help_human:
       "Human operator reserve une place humaine. Aucun modele ni URL n'est requis.",
     field_model_hint_local: "Exemple : qwen2.5-7b-instruct",
-    field_base_url_hint_local: "Exemple : http://127.0.0.1:1234/v1",
+    field_base_url_hint_local: "Exemple : http://localhost:1234/v1",
     field_model_hint_remote: "Exemple : gpt-4o-mini",
     field_base_url_hint_remote: "Exemple : https://api.openai.com/v1",
     field_api_env_hint_remote: "Exemple : OPENAI_API_KEY",
@@ -299,7 +299,7 @@ const I18N = {
     bot_help_human:
       "Human operator reserves a human seat. No model or URL is required.",
     field_model_hint_local: "Example: qwen2.5-7b-instruct",
-    field_base_url_hint_local: "Example: http://127.0.0.1:1234/v1",
+    field_base_url_hint_local: "Example: http://localhost:1234/v1",
     field_model_hint_remote: "Example: gpt-4o-mini",
     field_base_url_hint_remote: "Example: https://api.openai.com/v1",
     field_api_env_hint_remote: "Example: OPENAI_API_KEY",
@@ -363,9 +363,9 @@ const DIRECT_SECRET_STORAGE_KEY = "openfront.controlRoom.directSecrets.v1";
 const VAULT_STORAGE_KEY = "openfront.controlRoom.secretVault.v1";
 const VAULT_PBKDF2_ITERATIONS = 200000;
 const LOCAL_PROVIDER_PRESETS = [
-  { id: "lm_studio", label: "LM Studio local", baseUrl: "http://127.0.0.1:1234/v1" },
-  { id: "ollama", label: "Ollama OpenAI", baseUrl: "http://127.0.0.1:11434/v1" },
-  { id: "vllm", label: "vLLM local", baseUrl: "http://127.0.0.1:8000/v1" },
+  { id: "lm_studio", label: "LM Studio local", baseUrl: "http://localhost:1234/v1" },
+  { id: "ollama", label: "Ollama OpenAI", baseUrl: "http://localhost:11434/v1" },
+  { id: "vllm", label: "vLLM local", baseUrl: "http://localhost:8000/v1" },
   { id: "custom", label: "Custom", baseUrl: null },
 ];
 const REMOTE_PROVIDER_PRESETS = [
@@ -1295,7 +1295,7 @@ function slotCard(slot, index, config) {
         </div>
         <div class="form-group" style="${showBaseUrl ? '' : 'display:none;'}">
           <label>${t("slot_base_url")} <span class="text-xs font-normal text-muted">(${slotFieldHint(slot, "baseUrl")})</span></label>
-          <input class="input" data-field="baseUrl" type="text" value="${slot.baseUrl || ""}" placeholder="${slot.preset === "remote_api" ? "https://api.openai.com/v1" : "http://127.0.0.1:1234/v1"}" />
+          <input class="input" data-field="baseUrl" type="text" value="${slot.baseUrl || ""}" placeholder="${slot.preset === "remote_api" ? "https://api.openai.com/v1" : "http://localhost:1234/v1"}" />
         </div>
         <div class="form-group" style="${showSecretMode ? "" : "display:none;"}">
           <label>${t("slot_secret_mode")} <span class="text-xs font-normal text-muted">(${slotFieldHint(slot, "secretMode")})</span></label>

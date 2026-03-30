@@ -10,7 +10,7 @@ $scriptsDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $root = Split-Path -Parent (Split-Path -Parent $scriptsDir)
 $openfrontRoot = Join-Path (Split-Path -Parent $root) "OpenFrontIO"
 $controlRoomPort = 4318
-$controlRoomUrl = "http://127.0.0.1:$controlRoomPort"
+$controlRoomUrl = "http://localhost:$controlRoomPort"
 $openfrontPorts = @(9000, 3000, 3001, 3002)
 $allPorts = @($controlRoomPort) + $openfrontPorts
 

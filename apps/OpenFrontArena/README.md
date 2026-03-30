@@ -39,7 +39,7 @@ Depuis la racine du workspace :
 
 ## Notes
 
-- La control room est accessible sur `http://127.0.0.1:4318`
+- La control room est accessible sur `http://localhost:4318`
 - OpenFrontIO local tourne sur `9000 / 3000 / 3001 / 3002`
 - Les checks `Local LLM` et `Remote API` dans l'UI testent la connectivite reelle du endpoint
 - Les IA locales se branchent depuis l'interface, pas via un lanceur separe

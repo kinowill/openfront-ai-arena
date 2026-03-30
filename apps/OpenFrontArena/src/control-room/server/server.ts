@@ -162,7 +162,7 @@ export function startControlRoomServer(port = 4318): http.Server {
         const defaultBaseUrl =
           body.backend === "local_llm"
             ? process.env.OPENFRONT_BOTS_LOCAL_LLM_BASE_URL ??
-              "http://127.0.0.1:11434/v1"
+              "http://localhost:11434/v1"
             : process.env.OPENFRONT_BOTS_REMOTE_API_BASE_URL ?? null;
         const apiKey =
           body.backend === "remote_api"
@@ -241,12 +241,12 @@ export function startControlRoomServer(port = 4318): http.Server {
     }
   });
 
-  server.listen(port, "127.0.0.1");
+  server.listen(port, "localhost");
   return server;
 }
 
 if (import.meta.url === `file://${process.argv[1]?.replace(/\\/g, "/")}`) {
   const port = Number(process.env.OPENFRONT_BOTS_CONTROL_ROOM_PORT ?? 4318);
   startControlRoomServer(port);
-  console.log(`Control Room running on http://127.0.0.1:${port}`);
+  console.log(`Control Room running on http://localhost:${port}`);
 }

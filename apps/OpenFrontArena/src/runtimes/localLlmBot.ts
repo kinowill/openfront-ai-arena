@@ -15,7 +15,7 @@ export class LocalLlmBot extends OpenAICompatibleBot {
         backend: "local_llm",
         version: "1.0.0",
       },
-      baseUrl: options.baseUrl ?? "http://127.0.0.1:11434/v1",
+      baseUrl: options.baseUrl ?? "http://localhost:11434/v1",
       model: options.model,
       systemPrompt: options.systemPrompt,
     });
