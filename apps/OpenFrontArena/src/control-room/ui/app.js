@@ -76,6 +76,7 @@ const I18N = {
       "Aucun slot humain reserve actif. Passe un slot en 'Humain reserve' pour jouer ici.",
     save_done: "Configuration enregistree",
     started: "Session lancee",
+    lobby_prepared: "Lobby prepare",
     stopped: "Session arretee",
     logs_cleared: "Logs precedents effaces",
     logs_clear_failed: "Impossible d'effacer les logs precedents",
@@ -172,6 +173,8 @@ const I18N = {
     play: "Jouer",
     surface_open: "Ouvrir dans un onglet",
     surface_reload: "Recharger la vue",
+    button_prepare: "Preparer le lobby",
+    button_launch: "Lancer la partie",
     button_clear_logs: "Effacer les logs precedents",
     field_team_count: "Equipes",
     slot_team: "Equipe",
@@ -218,6 +221,7 @@ const I18N = {
       "There is no active reserved human slot. Switch a slot to 'Reserved human' to play from here.",
     save_done: "Configuration saved",
     started: "Session started",
+    lobby_prepared: "Lobby prepared",
     stopped: "Session stopped",
     logs_cleared: "Previous logs cleared",
     logs_clear_failed: "Could not clear previous logs",
@@ -314,6 +318,8 @@ const I18N = {
     play: "Play",
     surface_open: "Open in a tab",
     surface_reload: "Reload view",
+    button_prepare: "Prepare lobby",
+    button_launch: "Launch match",
     button_clear_logs: "Clear previous logs",
     field_team_count: "Teams",
     slot_team: "Team",
@@ -1405,6 +1411,10 @@ function renderSession(session) {
   if (el.addBotBatch) {
     el.addBotBatch.disabled = false;
   }
+  if (el.startSession) {
+    el.startSession.textContent =
+      session.runtime.status === "lobby" ? t("button_launch") : t("button_prepare");
+  }
 
   el.sessionRuntime.innerHTML = `
     <div class="feed-item mt-4 border-primary">
@@ -1573,7 +1583,7 @@ async function startSession() {
   });
   latestDashboard.session = session;
   renderSession(session);
-  setStatus(t("started"), "online");
+  setStatus(session.runtime.status === "lobby" ? t("lobby_prepared") : t("started"), "online");
 }
 
 async function stopSession() {

@@ -296,7 +296,6 @@ export class ControlRoomSessionManager {
         throw new Error("At least two total participants are required.");
       }
 
-      const humanSlots = enabledSlots.filter((slot) => slot.slotKind === "human_reserved");
       const botSlots = enabledSlots.filter((slot) => slot.slotKind === "bot");
       const resolvedMapName = resolveConfiguredMapName(this.config);
       const lobby = buildLobbyInfo(randomUUID().replace(/-/g, "").slice(0, 8));
@@ -317,7 +316,7 @@ export class ControlRoomSessionManager {
 
       this.runtime = {
         ...defaultRuntime(),
-        status: humanSlots.length > 0 ? "lobby" : "running",
+        status: "lobby",
         activeMatchId: lobby.gameId,
         startedAt: new Date().toISOString(),
         tick: 0,
@@ -325,10 +324,7 @@ export class ControlRoomSessionManager {
         joinUrl: lobby.joinUrl,
         requiredPlayers: enabledSlots.length,
         connectedPlayers: 0,
-        lastSummary:
-          humanSlots.length > 0
-            ? `OpenFront lobby prepared on ${resolvedMapName}. Join the reserved human slot(s), then press start again.`
-            : `OpenFront lobby prepared on ${resolvedMapName}. Launching match.`,
+        lastSummary: `OpenFront lobby prepared on ${resolvedMapName}. Bots can join now. Launch the match when the lobby is ready.`,
       };
 
       this.botClients = [];
@@ -366,10 +362,6 @@ export class ControlRoomSessionManager {
       }
 
       await this.refreshLobbyCounts();
-
-      if (humanSlots.length === 0) {
-        await this.launchPreparedLobby();
-      }
 
       return this.snapshot();
     } catch (error) {
