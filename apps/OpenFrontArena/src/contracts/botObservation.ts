@@ -1,5 +1,4 @@
 import type {
-  BotPlaystyle,
   DistanceBand,
   FrontStatus,
   FrontType,
@@ -95,7 +94,6 @@ export interface BotFront {
   strategicValue: Score;
   neutralTilesAvailable: number;
   distanceToEnemyCore: DistanceBand;
-  notableOptions: string[];
 }
 
 export interface BotStructuresState {
@@ -126,7 +124,6 @@ export interface BotThreat {
   severity: Score;
   frontId: ID | null;
   targetPlayerId: ID | null;
-  responseOptions: string[];
 }
 
 export interface BotObservationV1 {
@@ -149,6 +146,4 @@ export interface BotObservationV1 {
   recentEvents: TimedEvent[];
   strategicSummary: string[];
   validActions: ValidAction[];
-  inferredStyle?: BotPlaystyle;
-  inferredSecondaryStyle?: BotPlaystyle | null;
 }

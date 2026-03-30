@@ -19,8 +19,6 @@ function syntheticWaitAction(): ValidAction {
     id: "wait_fallback",
     type: "wait",
     label: "Wait",
-    importanceHint: 0,
-    goalTags: ["stabilize"],
     notes: ["Synthetic fallback because validActions was empty."],
   };
 }

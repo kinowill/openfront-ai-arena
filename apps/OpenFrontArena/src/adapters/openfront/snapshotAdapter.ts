@@ -313,8 +313,6 @@ function findUpgradeActions(player: OpenFrontPlayer): ValidAction[] {
         label: `Upgrade ${buildable.type} #${buildable.canUpgrade}`,
         structureType: structureTypeFromUnitType(buildable.type),
         unitId: buildable.canUpgrade,
-        importanceHint: buildable.type === UNIT_CITY ? 0.86 : 0.68,
-        goalTags: ["scale_economy", "stabilize", "fortify"],
         notes: [
           `Upgrade available from sampled tile ${tile}.`,
           `Estimated cost ${buildable.cost.toString()} gold.`,
@@ -364,9 +362,10 @@ function findExpandActions(
       label: `Expand into neutral tile ${tile}`,
       targetTile: tile,
       distanceBand: "adjacent",
-      importanceHint: score,
-      goalTags: ["expand", "tempo", "secure_border"],
-      notes: ["Adjacent terra nullius tile on the current border."],
+      notes: [
+        "Adjacent terra nullius tile on the current border.",
+        game.isOceanShore(tile) ? "Tile is coastal." : "Tile is inland.",
+      ],
     }));
 }
 
@@ -390,10 +389,6 @@ function findLandAttackActions(player: OpenFrontPlayer): ValidAction[] {
       estimatedCommitRatio: clamp01(
         0.25 + enemy.troops() / Math.max(1, player.troops()),
       ),
-      importanceHint: clamp01(
-        0.8 - enemy.troops() / Math.max(1, player.troops() + enemy.troops()),
-      ),
-      goalTags: ["pressure_enemy", "breakthrough", "retaliate"],
       notes: [
         `Enemy troops ${enemy.troops()}, our troops ${player.troops()}.`,
       ],
@@ -445,8 +440,6 @@ function findNavalAttackActions(
       launchTile,
       landingTile: tile,
       estimatedCommitRatio: 0.35,
-      importanceHint: isPlayer(owner) ? 0.65 : 0.58,
-      goalTags: ["naval_projection", "expand", "flank"],
       notes: [
         `Transport launch confirmed from tile ${launchTile}.`,
         isPlayer(owner)
@@ -482,8 +475,6 @@ function findBuildActions(
     structureType: candidate.structureType,
     tile: candidate.tile,
     targetFrontType: candidate.structureType === "Port" ? "coast" : "land",
-    importanceHint: candidate.score,
-    goalTags: ["fortify", "scale_economy", "prepare_power_spike"],
     notes: [candidate.reason, `Estimated cost ${candidate.cost.toString()} gold.`],
   }));
 }
@@ -505,8 +496,6 @@ function findAssistActions(player: OpenFrontPlayer): ValidAction[] {
         label: `Assist ally ${ally.displayName()}`,
         allyPlayerId: ally.id(),
         targetPlayerId: incomingAttack?.attacker().id() ?? null,
-        importanceHint: incomingAttack ? 0.82 : 0.64,
-        goalTags: ["defend_ally", "stabilize_front"],
         notes: incomingAttack
           ? [`Ally under attack by ${incomingAttack.attacker().displayName()}.`]
           : ["Ally is materially weaker and may need support."],
@@ -531,8 +520,6 @@ function findTargetActions(player: OpenFrontPlayer): ValidAction[] {
       type: "set_target",
       label: `Mark ${enemy.displayName()} as target`,
       targetPlayerId: enemy.id(),
-      importanceHint: 0.55,
-      goalTags: ["focus_fire", "coordinate"],
       notes: ["Targeting is allowed by the current diplomacy state."],
     }));
 }
@@ -548,9 +535,6 @@ function findAllianceActions(player: OpenFrontPlayer): ValidAction[] {
       label: `Accept alliance with ${requester.displayName()}`,
       requestingPlayerId: requester.id(),
       targetPlayerId: requester.id(),
-      importanceHint:
-        requester.relation(player) >= RELATION_NEUTRAL ? 0.62 : 0.38,
-      goalTags: ["stabilize", "diplomacy"],
       notes: ["Pending alliance request visible in the current state."],
     });
     actions.push({
@@ -559,8 +543,6 @@ function findAllianceActions(player: OpenFrontPlayer): ValidAction[] {
       label: `Reject alliance with ${requester.displayName()}`,
       requestingPlayerId: requester.id(),
       targetPlayerId: requester.id(),
-      importanceHint: 0.2,
-      goalTags: ["diplomacy"],
       notes: ["Alternative to acceptance when alignment is poor."],
     });
   }
@@ -582,8 +564,6 @@ function findDonationActions(player: OpenFrontPlayer): ValidAction[] {
         allyPlayerId: ally.id(),
         amount: Math.max(100, Math.floor(gold * 0.2)),
         targetPlayerId: ally.id(),
-        importanceHint: 0.44,
-        goalTags: ["support_ally", "stabilize"],
         notes: ["Gold reserve is high enough to share without stalling."],
       });
     }
@@ -596,8 +576,6 @@ function findDonationActions(player: OpenFrontPlayer): ValidAction[] {
         allyPlayerId: ally.id(),
         amount: Math.max(100, Math.floor(troops * 0.15)),
         targetPlayerId: ally.id(),
-        importanceHint: 0.4,
-        goalTags: ["support_ally", "stabilize_front"],
         notes: ["Troop reserve exceeds a conservative support threshold."],
       });
     }
@@ -612,8 +590,7 @@ function emptyValidActions(): ValidAction[] {
       id: "wait_default",
       type: "wait",
       label: "Wait",
-      importanceHint: 0,
-      goalTags: ["stabilize", "observe"],
+      notes: ["No action selected yet."],
     },
   ];
 }
@@ -701,12 +678,6 @@ function buildFronts(
         stats.myClosestTile !== null && stats.enemyClosestTile !== null
           ? distanceBandFor(game, stats.myClosestTile, stats.enemyClosestTile)
           : "unknown",
-      notableOptions:
-        stats.relation === "terra_nullius"
-          ? ["expand", "secure"]
-          : myPressure >= enemyPressure
-            ? ["pressure", "probe"]
-            : ["hold", "fortify"],
     };
   });
 }
@@ -809,7 +780,9 @@ function buildOpportunities(
   if (terraFront && terraFront.neutralTilesAvailable > 0) {
     opportunities.push({
       type: "expand_into_terra_nullius",
-      signalStrength: 0.86,
+      signalStrength: clamp01(
+        terraFront.neutralTilesAvailable / Math.max(1, player.borderTiles().size),
+      ),
       frontId: terraFront.frontId,
       targetPlayerId: null,
       linkedActionIds: findExpandActions(game, player).map((action) => action.id),
@@ -839,7 +812,7 @@ function buildOpportunities(
     if (coastalBorder) {
       opportunities.push({
         type: "build_port_for_offshore_access",
-        signalStrength: 0.9,
+        signalStrength: clamp01(coastalBorder ? 0.75 : 0),
         frontId: null,
         targetPlayerId: null,
         linkedActionIds: summarizeBuildCandidates(player, game)
@@ -856,7 +829,10 @@ function buildOpportunities(
   if (pressuredAlly) {
     opportunities.push({
       type: "assist_ally_under_attack",
-      signalStrength: 0.72,
+      signalStrength: clamp01(
+        pressuredAlly.incomingAttacks().reduce((sum, attack) => sum + attack.troops(), 0) /
+          Math.max(1, pressuredAlly.troops()),
+      ),
       frontId: `front_${pressuredAlly.id()}`,
       targetPlayerId: pressuredAlly.id(),
       linkedActionIds: [`assist_${pressuredAlly.id()}`],
@@ -882,7 +858,6 @@ function buildThreats(
       severity: clamp01(incomingTroops / Math.max(1, player.troops())),
       frontId: null,
       targetPlayerId: null,
-      responseOptions: ["assist_ally", "build_structure", "wait"],
     });
   }
 
@@ -900,7 +875,6 @@ function buildThreats(
       ),
       frontId: `front_${strongerNeighbor.id()}`,
       targetPlayerId: strongerNeighbor.id(),
-      responseOptions: ["build_structure", "assist_ally", "wait"],
     });
   }
 
@@ -908,10 +882,9 @@ function buildThreats(
   if (exposedAssets.length > 0) {
     threats.push({
       type: "critical_asset_exposed",
-      severity: 0.74,
+      severity: clamp01(exposedAssets.length / 4),
       frontId: null,
       targetPlayerId: null,
-      responseOptions: ["build_structure", "wait"],
     });
   }
 
@@ -929,7 +902,6 @@ function buildThreats(
       severity: 0.7,
       frontId: null,
       targetPlayerId: null,
-      responseOptions: ["build_structure", "wait"],
     });
   }
 
@@ -939,10 +911,9 @@ function buildThreats(
   if (hostileFronts.length >= 3 && player.troops() < player.numTilesOwned() / 2) {
     threats.push({
       type: "front_overextended",
-      severity: 0.66,
+      severity: clamp01(hostileFronts.length / 5),
       frontId: hostileFronts[0]?.frontId ?? null,
       targetPlayerId: hostileFronts[0]?.enemyPlayerId ?? null,
-      responseOptions: ["wait", "build_structure", "assist_ally"],
     });
   }
 
@@ -1221,16 +1192,6 @@ export class OpenFrontSnapshotAdapter
       recentEvents: [],
       strategicSummary: summarizeStrategy(player, opportunities, threats),
       validActions,
-      inferredStyle:
-        coastalImportance >= 0.6
-          ? "naval_pressure"
-          : hostileNeighbors.length === 0
-            ? "safe_expansion"
-            : incomingAttackPressure > 0.45
-              ? "turtle"
-              : "hybrid",
-      inferredSecondaryStyle:
-        player.allies().length > 0 ? "alliance_operator" : null,
     };
   }
 }

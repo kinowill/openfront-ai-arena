@@ -1,5 +1,4 @@
 import type {
-  BotPlaystyle,
   ID,
   MatchRef,
   Ratio,
@@ -31,7 +30,6 @@ export interface ControlRoomPlayerStats {
   reserveRatio: Ratio;
   invalidActionRate: Ratio;
   decisionLatencyMsAvg: number | null;
-  inferredStyle: BotPlaystyle | "unknown";
 }
 
 export interface ControlRoomFrontSnapshot {

@@ -87,16 +87,6 @@ export type MapArchetype =
   | "mixed"
   | "unknown";
 
-export type BotPlaystyle =
-  | "safe_expansion"
-  | "turtle"
-  | "opportunistic_predator"
-  | "naval_pressure"
-  | "alliance_operator"
-  | "strategic_weapons"
-  | "hybrid"
-  | "unknown";
-
 export interface MatchRef {
   id: ID;
   tick: Tick;

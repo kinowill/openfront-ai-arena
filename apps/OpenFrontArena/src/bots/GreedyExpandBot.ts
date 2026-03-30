@@ -9,11 +9,6 @@ import type {
 } from "./types";
 
 function strategicGoalFromAction(action: ValidAction): string {
-  const taggedGoal = action.goalTags?.[0];
-  if (taggedGoal) {
-    return taggedGoal;
-  }
-
   switch (action.type) {
     case "expand":
       return "expand";

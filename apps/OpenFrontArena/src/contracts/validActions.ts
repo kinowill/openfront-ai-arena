@@ -3,7 +3,6 @@ import type {
   FrontType,
   ID,
   Ratio,
-  Score,
   StructureType,
   TileRef,
 } from "./shared";
@@ -31,8 +30,6 @@ export interface ValidActionBase {
   label: string;
   frontId?: ID | null;
   targetPlayerId?: ID | null;
-  importanceHint?: Score;
-  goalTags?: string[];
   notes?: string[];
 }
 

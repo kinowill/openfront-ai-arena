@@ -14,8 +14,6 @@ function syntheticWaitAction(): ValidAction {
     id: "wait_fallback",
     type: "wait",
     label: "Wait",
-    importanceHint: 0,
-    goalTags: ["stabilize"],
     notes: ["Synthetic fallback because validActions was empty."],
   };
 }
@@ -27,17 +25,13 @@ function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
 }
 
-function baseScore(action: ValidAction): number {
-  return action.importanceHint ?? 0;
-}
-
 function scoreActionAgainstProfile(
   observation: BotObservationV1,
   action: ValidAction,
   weights: ActionTypeWeights,
 ): RankedAction {
   const reasons: string[] = [];
-  let score = baseScore(action);
+  let score = 0.5;
 
   const weighted = weights[action.type];
   if (weighted !== undefined) {
@@ -109,6 +103,11 @@ function scoreActionAgainstProfile(
   ) {
     score += 0.12;
     reasons.push("naval_projection_available");
+  }
+
+  if (action.notes?.length) {
+    score += Math.min(0.08, action.notes.length * 0.02);
+    reasons.push("action_has_contextual_notes");
   }
 
   return {
