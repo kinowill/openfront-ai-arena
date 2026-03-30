@@ -1,5 +1,5 @@
 import type { BotObservationV1 } from "../contracts/botObservation";
-import type { BotDecisionV1 } from "../contracts/validActions";
+import type { BotDecisionV1, ValidAction } from "../contracts/validActions";
 import { chooseTopAction } from "./actionSelection";
 import type {
   BotDecisionContext,
@@ -8,68 +8,59 @@ import type {
   OpenFrontBot,
 } from "./types";
 
-function buildStrategicGoal(observation: BotObservationV1): string {
-  if (
-    observation.threats.some((entry) => entry.type === "major_incoming_attack")
-  ) {
-    return "stabilize_border";
+function strategicGoalFromAction(action: ValidAction): string {
+  const taggedGoal = action.goalTags?.[0];
+  if (taggedGoal) {
+    return taggedGoal;
   }
-  if (
-    observation.opportunities.some(
-      (entry) => entry.type === "build_port_for_offshore_access",
-    )
-  ) {
-    return "prepare_naval_access";
+
+  switch (action.type) {
+    case "expand":
+      return "expand";
+    case "attack_land":
+      return "pressure_enemy";
+    case "attack_naval":
+      return "naval_projection";
+    case "build_structure":
+      return "improve_position";
+    case "assist_ally":
+      return "support_ally";
+    case "set_target":
+      return "focus_enemy";
+    case "accept_alliance":
+    case "reject_alliance":
+    case "break_alliance":
+      return "manage_diplomacy";
+    case "donate_gold":
+    case "donate_troops":
+      return "resource_support";
+    case "upgrade_structure":
+      return "scale_position";
+    case "wait":
+    default:
+      return "observe_and_hold";
   }
-  if (
-    observation.opportunities.some(
-      (entry) => entry.type === "assist_ally_under_attack",
-    )
-  ) {
-    return "support_ally_front";
-  }
-  if (
-    observation.opportunities.some(
-      (entry) => entry.type === "expand_into_terra_nullius",
-    )
-  ) {
-    return "expand_safely";
-  }
-  if (
-    observation.opportunities.some((entry) => entry.type === "attack_weak_neighbor")
-  ) {
-    return "pressure_weak_neighbor";
-  }
-  return "hold_and_scale";
 }
 
 function buildTacticalReason(
-  observation: BotObservationV1,
+  action: ValidAction,
   reasons: string[],
+  observation: BotObservationV1,
 ): string {
-  if (
-    observation.threats.some((entry) => entry.type === "major_incoming_attack")
-  ) {
-    return "Incoming pressure is high, so the bot prioritizes stabilization over greed.";
+  const primaryNote = action.notes?.[0];
+  if (primaryNote) {
+    return primaryNote;
   }
-  if (
-    observation.opportunities.some(
-      (entry) => entry.type === "build_port_for_offshore_access",
-    )
-  ) {
-    return "A coastal opening exists and a port can unlock additional projection options.";
-  }
-  if (
-    observation.opportunities.some(
-      (entry) => entry.type === "expand_into_terra_nullius",
-    )
-  ) {
-    return "Neutral expansion remains available and is the safest way to gain tempo.";
-  }
+
   if (reasons.length > 0) {
-    return `Selected from weighted valid actions: ${reasons.join(", ")}.`;
+    return `Heuristic baseline selected '${action.label}' from the current action set: ${reasons.join(", ")}.`;
   }
-  return "Selected the highest-ranked safe action from the current valid action set.";
+
+  if (observation.threats.length > 0) {
+    return `Heuristic baseline selected '${action.label}' while threats are present in the current snapshot.`;
+  }
+
+  return `Heuristic baseline selected '${action.label}' from the current valid actions.`;
 }
 
 export class GreedyExpandBot implements OpenFrontBot {
@@ -99,8 +90,12 @@ export class GreedyExpandBot implements OpenFrontBot {
     });
 
     const decision: BotDecisionV1 = {
-      strategicGoal: buildStrategicGoal(observation),
-      tacticalReason: buildTacticalReason(observation, ranked.reasons),
+      strategicGoal: strategicGoalFromAction(ranked.action),
+      tacticalReason: buildTacticalReason(
+        ranked.action,
+        ranked.reasons,
+        observation,
+      ),
       selectedActionId: ranked.action.id,
       confidence: ranked.score,
     };

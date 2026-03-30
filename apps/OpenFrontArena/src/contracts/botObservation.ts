@@ -95,7 +95,7 @@ export interface BotFront {
   strategicValue: Score;
   neutralTilesAvailable: number;
   distanceToEnemyCore: DistanceBand;
-  recommendedModes: string[];
+  notableOptions: string[];
 }
 
 export interface BotStructuresState {
@@ -115,7 +115,7 @@ export interface BotStructuresState {
 
 export interface BotOpportunity {
   type: OpportunityType;
-  priority: Score;
+  signalStrength: Score;
   frontId: ID | null;
   targetPlayerId: ID | null;
   linkedActionIds: ID[];
@@ -126,7 +126,7 @@ export interface BotThreat {
   severity: Score;
   frontId: ID | null;
   targetPlayerId: ID | null;
-  recommendedResponseTypes: string[];
+  responseOptions: string[];
 }
 
 export interface BotObservationV1 {
@@ -149,6 +149,6 @@ export interface BotObservationV1 {
   recentEvents: TimedEvent[];
   strategicSummary: string[];
   validActions: ValidAction[];
-  currentStyle?: BotPlaystyle;
-  secondaryStyle?: BotPlaystyle | null;
+  inferredStyle?: BotPlaystyle;
+  inferredSecondaryStyle?: BotPlaystyle | null;
 }

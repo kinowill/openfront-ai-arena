@@ -31,8 +31,8 @@ export interface ValidActionBase {
   label: string;
   frontId?: ID | null;
   targetPlayerId?: ID | null;
-  priorityHint?: Score;
-  supportsGoals?: string[];
+  importanceHint?: Score;
+  goalTags?: string[];
   notes?: string[];
 }
 

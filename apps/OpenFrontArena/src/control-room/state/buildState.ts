@@ -106,7 +106,7 @@ function playerStatsFromLatest(
       reserveRatio: observation.player.reserveRatio,
       invalidActionRate,
       decisionLatencyMsAvg: null,
-      currentStyle: observation.currentStyle ?? "unknown",
+      inferredStyle: observation.inferredStyle ?? "unknown",
     };
   });
 
@@ -134,7 +134,7 @@ function playerStatsFromLatest(
         reserveRatio: 0,
         invalidActionRate: 0,
         decisionLatencyMsAvg: null,
-        currentStyle: "unknown",
+        inferredStyle: "unknown",
       });
     }
   }

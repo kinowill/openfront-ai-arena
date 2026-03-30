@@ -515,7 +515,7 @@ function renderControlRoom(controlRoom) {
           <tr>
             <td>
               <div class="font-semibold">${player.displayName}</div>
-              <div class="text-xs text-muted">${player.currentStyle} ${badge(player.alive ? t("alive") : t("dead"), player.alive ? "configured" : "error")}</div>
+              <div class="text-xs text-muted">${player.inferredStyle} ${badge(player.alive ? t("alive") : t("dead"), player.alive ? "configured" : "error")}</div>
             </td>
             <td>
               <div class="font-semibold">${numberFormat.format(player.tilesOwned)}</div>

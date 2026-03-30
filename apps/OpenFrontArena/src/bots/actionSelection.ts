@@ -14,8 +14,8 @@ function syntheticWaitAction(): ValidAction {
     id: "wait_fallback",
     type: "wait",
     label: "Wait",
-    priorityHint: 0,
-    supportsGoals: ["stabilize"],
+    importanceHint: 0,
+    goalTags: ["stabilize"],
     notes: ["Synthetic fallback because validActions was empty."],
   };
 }
@@ -28,7 +28,7 @@ function clamp01(value: number): number {
 }
 
 function baseScore(action: ValidAction): number {
-  return action.priorityHint ?? 0;
+  return action.importanceHint ?? 0;
 }
 
 function scoreActionAgainstProfile(

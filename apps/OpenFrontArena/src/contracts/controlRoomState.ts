@@ -31,7 +31,7 @@ export interface ControlRoomPlayerStats {
   reserveRatio: Ratio;
   invalidActionRate: Ratio;
   decisionLatencyMsAvg: number | null;
-  currentStyle: BotPlaystyle | "unknown";
+  inferredStyle: BotPlaystyle | "unknown";
 }
 
 export interface ControlRoomFrontSnapshot {

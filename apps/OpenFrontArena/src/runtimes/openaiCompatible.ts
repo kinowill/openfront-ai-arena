@@ -25,6 +25,8 @@ interface ParsedDecision {
 const DEFAULT_SYSTEM_PROMPT = [
   "Tu pilotes un joueur dans OpenFront.",
   "Tu recois une observation structuree et une liste d'actions valides.",
+  "Les actions sont deja legales ou validees par le moteur.",
+  "Choisis l'action qui sert le mieux ton plan du tick.",
   "Tu dois repondre uniquement en JSON valide.",
   'Format: {"strategic_goal":"...","tactical_reason":"...","selected_action_id":"...","confidence":0.0}',
   "Ne choisis qu'une action presente dans validActions.",
