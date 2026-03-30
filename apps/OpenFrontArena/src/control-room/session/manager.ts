@@ -145,7 +145,6 @@ function sanitizeConfig(next: Partial<ControlRoomSessionConfig>): ControlRoomSes
   const base = defaultConfig();
   const gameMode = next.gameMode === "team" ? "team" : "ffa";
   const slots = (next.slots ?? base.slots)
-    .slice(0, 8)
     .map((slot, index) => {
       const sanitized = sanitizeSlot(slot, index);
       return gameMode === "team" ? sanitized : { ...sanitized, teamPreference: null };

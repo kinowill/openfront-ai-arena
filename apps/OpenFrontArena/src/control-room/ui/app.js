@@ -88,7 +88,7 @@ const I18N = {
     slot_status_bot: "Ce slot lancera un bot.",
     slot_status_human: "Ce slot reserve une place humaine dans le lobby.",
     slot_status_off: "Ce slot est ignore tant qu'il reste desactive.",
-    slots_limit: "Maximum 8 slots.",
+    slots_limit: "Aucune limite artificielle de slots.",
     slot_backend: "Backend",
     slot_name: "Nom",
     slot_type: "Type",
@@ -230,7 +230,7 @@ const I18N = {
     slot_status_bot: "This slot will run a bot.",
     slot_status_human: "This slot reserves a human seat in the lobby.",
     slot_status_off: "This slot is ignored until it is enabled.",
-    slots_limit: "Maximum 8 slots.",
+    slots_limit: "No artificial slot limit.",
     slot_backend: "Backend",
     slot_name: "Name",
     slot_type: "Type",
@@ -1375,26 +1375,25 @@ function renderSession(session) {
     `;
 
   if (el.addBotSlot) {
-    el.addBotSlot.disabled = config.slots.length >= 8;
+    el.addBotSlot.disabled = false;
   }
   if (el.addHumanSlot) {
-    el.addHumanSlot.disabled = config.slots.length >= 8;
+    el.addHumanSlot.disabled = false;
   }
   if (el.botBatchCount) {
-    const remainingSlots = Math.max(0, 8 - config.slots.length);
-    const minBatch = remainingSlots >= 2 ? 2 : Math.max(remainingSlots, 1);
-    el.botBatchCount.max = String(Math.max(1, remainingSlots));
+    const minBatch = 1;
+    el.botBatchCount.removeAttribute("max");
     el.botBatchCount.min = String(minBatch);
     el.botBatchCount.value = String(
       Math.min(
         Math.max(Number(el.botBatchCount.value || 4), minBatch),
-        Math.max(1, remainingSlots),
+        Math.max(1, Number(el.botBatchCount.value || 4)),
       ),
     );
-    el.botBatchCount.disabled = remainingSlots === 0;
+    el.botBatchCount.disabled = false;
   }
   if (el.addBotBatch) {
-    el.addBotBatch.disabled = config.slots.length >= 8;
+    el.addBotBatch.disabled = false;
   }
 
   el.sessionRuntime.innerHTML = `
@@ -1596,9 +1595,6 @@ function refreshDraftFromDom() {
 
 function addSlot(kind) {
   ensureDraftConfig();
-  if (draftSessionConfig.slots.length >= 8) {
-    return;
-  }
   draftSessionConfig.slots.push(createSlotDraft(kind));
   latestDashboard.session.config = clone(draftSessionConfig);
   sessionDirty = true;
@@ -1607,8 +1603,7 @@ function addSlot(kind) {
 
 function addBotBatch(count) {
   ensureDraftConfig();
-  const remainingSlots = Math.max(0, 8 - draftSessionConfig.slots.length);
-  const safeCount = Math.max(0, Math.min(remainingSlots, count));
+  const safeCount = Math.max(0, count);
   for (let index = 0; index < safeCount; index += 1) {
     draftSessionConfig.slots.push(createSlotDraft("bot"));
   }
