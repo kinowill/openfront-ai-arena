@@ -160,9 +160,20 @@ export class HeadlessBotClient {
           );
         });
       });
-      this.socket.addEventListener("close", () => {
+      this.socket.addEventListener("close", (event: CloseEvent) => {
         this.stopPing();
-        void this.debug("socket_close", { joinedLobby: this.joinedLobby });
+        void this.debug("socket_close", {
+          joinedLobby: this.joinedLobby,
+          code: event.code,
+          reason: event.reason || null,
+          wasClean: event.wasClean,
+        });
+        if (!this.stopped) {
+          this.options.onSummary?.(
+            `${this.options.displayName} socket closed (code ${event.code}).`,
+            this.runner?.game.ticks() ?? null,
+          );
+        }
         if (!this.joinedLobby && this.joinReject) {
           this.joinReject(new Error(`Bot ${this.options.displayName} disconnected before lobby join.`));
         }
@@ -439,16 +450,18 @@ export class HeadlessBotClient {
         game,
       );
       if (spawnIntent) {
-        await this.send({
+        const sent = await this.send({
           type: "intent",
           intent: spawnIntent,
         });
-        await this.debug("intent_sent", {
-          tick: observation.match.tick,
-          intentType: spawnIntent.type,
-          forced: true,
-          selectedActionId: spawnAction.id,
-        });
+        if (sent) {
+          await this.debug("intent_sent", {
+            tick: observation.match.tick,
+            intentType: spawnIntent.type,
+            forced: true,
+            selectedActionId: spawnAction.id,
+          });
+        }
       }
       return;
     }
@@ -475,15 +488,17 @@ export class HeadlessBotClient {
     );
 
     if (intent) {
-      await this.send({
+      const sent = await this.send({
         type: "intent",
         intent,
       });
-      this.lastActedTick = observation.match.tick;
-      await this.debug("intent_sent", {
-        tick: observation.match.tick,
-        intentType: intent.type,
-      });
+      if (sent) {
+        this.lastActedTick = observation.match.tick;
+        await this.debug("intent_sent", {
+          tick: observation.match.tick,
+          intentType: intent.type,
+        });
+      }
     } else {
       await this.debug("intent_skipped", {
         tick: observation.match.tick,
@@ -541,9 +556,9 @@ export class HeadlessBotClient {
     }
   }
 
-  private async send(message: ClientMessage): Promise<void> {
+  private async send(message: ClientMessage): Promise<boolean> {
     if (!this.socket || this.socket.readyState !== 1) {
-      return;
+      return false;
     }
     if (message.type === "intent") {
       const minIntentIntervalMs =
@@ -556,10 +571,11 @@ export class HeadlessBotClient {
           minIntentIntervalMs,
           elapsedMs: elapsed,
         });
-        return;
+        return false;
       }
       this.lastIntentSentAt = now;
     }
     this.socket.send(JSON.stringify(message));
+    return true;
   }
 }
