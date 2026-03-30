@@ -3,11 +3,12 @@ import type { OpenFrontBot } from "../bots/types";
 import { OpenFrontSnapshotAdapter } from "../adapters/openfront/snapshotAdapter";
 import type { MatchRef } from "../contracts/shared";
 import { arbitrateDecision, buildDecisionRecord } from "./arbiter";
+import { buildRecentEvents } from "./observationMemory";
 import {
   type OpenFrontExecutionResult,
   OpenFrontActionExecutor,
 } from "./openfrontExecutor";
-import type { JsonlTickLogger } from "./tickLogger";
+import type { JsonlTickLogger, TickLogEntry } from "./tickLogger";
 
 export interface OpenFrontBotLoopOptions {
   rulesVersion?: string;
@@ -24,6 +25,7 @@ export interface OpenFrontBotTickResult {
 export class OpenFrontBotLoop {
   private readonly adapter = new OpenFrontSnapshotAdapter();
   private readonly executor: OpenFrontActionExecutor;
+  private readonly botHistory = new Map<string, TickLogEntry[]>();
 
   constructor(
     private readonly game: Game,
@@ -34,6 +36,9 @@ export class OpenFrontBotLoop {
   }
 
   async tick(bot: OpenFrontBot, player: Player): Promise<OpenFrontBotTickResult> {
+    const history = this.botHistory.get(bot.identity.id) ?? [];
+    const previousObservation = history.at(-1)?.observation ?? null;
+
     const observation = this.adapter.produce({
       game: this.game as any,
       player: player as any,
@@ -43,9 +48,18 @@ export class OpenFrontBotLoop {
         rulesVersion: this.options.rulesVersion ?? "openfront-rules-1",
       },
     });
+    observation.recentEvents = buildRecentEvents({
+      currentObservation: observation,
+      previousObservation,
+      history,
+    });
 
     const runtimeDecision = await bot.decide(observation, {
       tick: observation.match.tick,
+      recentEvents: observation.recentEvents,
+      recentDecisions: history
+        .slice(-5)
+        .map((entry) => entry.decisionRecord),
     });
     const arbitration = arbitrateDecision(observation, runtimeDecision.decision);
     const execution = this.executor.execute(player, arbitration.executedAction);
@@ -68,14 +82,18 @@ export class OpenFrontBotLoop {
       decisionRecord,
     };
 
+    const tickEntry: TickLogEntry = {
+      decisionRecord,
+      observation,
+      execution,
+      botId: bot.identity.id,
+      createdAt: new Date().toISOString(),
+    };
+
+    this.botHistory.set(bot.identity.id, [...history, tickEntry].slice(-12));
+
     if (this.options.tickLogger) {
-      await this.options.tickLogger.log({
-        decisionRecord,
-        observation,
-        execution,
-        botId: bot.identity.id,
-        createdAt: new Date().toISOString(),
-      });
+      await this.options.tickLogger.log(tickEntry);
     }
 
     return result;

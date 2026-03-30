@@ -1,4 +1,6 @@
 import type { BotObservationV1 } from "../contracts/botObservation";
+import type { TimedEvent } from "../contracts/shared";
+import type { BotDecisionRecord } from "../contracts/controlRoomState";
 import type { Ratio } from "../contracts/shared";
 import type { BotDecisionV1, ValidAction } from "../contracts/validActions";
 
@@ -18,6 +20,8 @@ export interface BotIdentity {
 export interface BotDecisionContext {
   tick: number;
   timeoutMs?: number;
+  recentEvents?: TimedEvent[];
+  recentDecisions?: BotDecisionRecord[];
 }
 
 export interface BotRuntimeDecision {

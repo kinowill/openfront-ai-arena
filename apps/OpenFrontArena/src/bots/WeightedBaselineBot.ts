@@ -62,6 +62,8 @@ function buildTacticalReason(
 
 export class WeightedBaselineBot implements OpenFrontBot {
   readonly identity: BotIdentity;
+  private lastActionType: ValidActionType | null = null;
+  private lastTick: number | null = null;
 
   constructor(
     identity: BotIdentity,
@@ -72,9 +74,29 @@ export class WeightedBaselineBot implements OpenFrontBot {
 
   decide(
     observation: BotObservationV1,
-    _context?: BotDecisionContext,
+    context?: BotDecisionContext,
   ): BotRuntimeDecision {
-    const ranked = chooseTopAction(observation, this.weights);
+    const continuityWeights: ActionTypeWeights = { ...this.weights };
+    const severePressure = observation.military.incomingAttackPressure > 0.45;
+    const recentSetback = (context?.recentEvents ?? []).some(
+      (event) =>
+        event.type === "territory_lost" ||
+        event.type === "under_attack" ||
+        event.type === "structure_destroyed",
+    );
+
+    if (
+      this.lastActionType &&
+      this.lastTick !== null &&
+      observation.match.tick - this.lastTick <= 6 &&
+      !severePressure &&
+      !recentSetback
+    ) {
+      continuityWeights[this.lastActionType] =
+        (continuityWeights[this.lastActionType] ?? 0) + 0.06;
+    }
+
+    const ranked = chooseTopAction(observation, continuityWeights);
 
     const decision: BotDecisionV1 = {
       strategicGoal: strategicGoalFromAction(ranked.action),
@@ -86,6 +108,9 @@ export class WeightedBaselineBot implements OpenFrontBot {
       selectedActionId: ranked.action.id,
       confidence: ranked.score,
     };
+
+    this.lastActionType = ranked.action.type;
+    this.lastTick = observation.match.tick;
 
     return {
       decision,
