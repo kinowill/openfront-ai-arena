@@ -58,6 +58,7 @@ export class HeadlessBotClient {
   private spawnAttempt = 0;
   private runnerBroken = false;
   private lastActedTick = -1;
+  private lastIntentSentAt = 0;
 
   constructor(private readonly options: HeadlessBotClientOptions) {}
 
@@ -543,6 +544,21 @@ export class HeadlessBotClient {
   private async send(message: ClientMessage): Promise<void> {
     if (!this.socket || this.socket.readyState !== 1) {
       return;
+    }
+    if (message.type === "intent") {
+      const minIntentIntervalMs =
+        this.options.bot.identity.backend === "rule_based" ? 250 : 400;
+      const now = Date.now();
+      const elapsed = now - this.lastIntentSentAt;
+      if (elapsed < minIntentIntervalMs) {
+        await this.debug("intent_skipped", {
+          selectedActionType: "rate_limited_locally",
+          minIntentIntervalMs,
+          elapsedMs: elapsed,
+        });
+        return;
+      }
+      this.lastIntentSentAt = now;
     }
     this.socket.send(JSON.stringify(message));
   }
