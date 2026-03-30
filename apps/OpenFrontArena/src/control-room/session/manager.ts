@@ -34,6 +34,10 @@ import {
   startPrivateLobby,
 } from "./openfrontBridge";
 import { HeadlessBotClient } from "./headlessBotClient";
+import {
+  isAllowedRemoteApiKeyEnvName,
+  resolveAllowedRemoteApiKeyFromEnv,
+} from "./secrets";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -131,7 +135,10 @@ function sanitizeSlot(slot: ControlRoomSlotConfig, index: number): ControlRoomSl
     baseUrl: slot.baseUrl?.trim() || null,
     secretMode,
     secretRef: preset === "remote_api" ? slot.secretRef?.trim() || null : null,
-    apiKeyEnv: slot.apiKeyEnv?.trim() || null,
+    apiKeyEnv:
+      isAllowedRemoteApiKeyEnvName(slot.apiKeyEnv) && slot.apiKeyEnv
+        ? slot.apiKeyEnv.trim()
+        : null,
     teamPreference:
       slot.teamPreference && TEAM_COLORS.includes(slot.teamPreference as (typeof TEAM_COLORS)[number])
         ? slot.teamPreference
@@ -480,7 +487,7 @@ export class ControlRoomSessionManager {
         const baseUrl = slot.baseUrl ?? process.env.OPENFRONT_BOTS_REMOTE_API_BASE_URL;
         const apiKey =
           this.slotApiKeys.get(slot.slotId) ??
-          (slot.apiKeyEnv ? process.env[slot.apiKeyEnv] : undefined) ??
+          resolveAllowedRemoteApiKeyFromEnv(slot.apiKeyEnv) ??
           process.env.OPENFRONT_BOTS_REMOTE_API_KEY;
         if (!model || !baseUrl || !apiKey) {
           throw new Error(

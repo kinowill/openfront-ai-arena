@@ -8,6 +8,10 @@ import {
   mapThumbnailPath,
   RANDOM_MAP_VALUE,
 } from "../session/manager";
+import {
+  isAllowedRemoteApiKeyEnvName,
+  resolveAllowedRemoteApiKeyFromEnv,
+} from "../session/secrets";
 import { buildControlRoomSnapshot } from "../state/buildState";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -15,6 +19,16 @@ const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, "../../..");
 const UI_DIR = path.join(ROOT_DIR, "src", "control-room", "ui");
 const LOG_FILE = path.join(ROOT_DIR, "logs", "local-harness.jsonl");
+const MAX_JSON_BODY_BYTES = 64 * 1024;
+
+class HttpError extends Error {
+  constructor(
+    message: string,
+    readonly statusCode: number,
+  ) {
+    super(message);
+  }
+}
 
 function contentType(filePath: string): string {
   if (filePath.endsWith(".html")) return "text/html; charset=utf-8";
@@ -50,8 +64,14 @@ function routeToUiFile(urlPath: string): string {
 
 async function readJsonBody(req: http.IncomingMessage): Promise<unknown> {
   const chunks: Buffer[] = [];
+  let totalBytes = 0;
   for await (const chunk of req) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    totalBytes += buffer.length;
+    if (totalBytes > MAX_JSON_BODY_BYTES) {
+      throw new HttpError("Request body too large", 413);
+    }
+    chunks.push(buffer);
   }
 
   const raw = Buffer.concat(chunks).toString("utf8").trim();
@@ -158,6 +178,10 @@ export function startControlRoomServer(port = 4318): http.Server {
           writeJson(res, 400, { error: "backend must be local_llm or remote_api" });
           return;
         }
+        if (body.apiKeyEnv && !isAllowedRemoteApiKeyEnvName(body.apiKeyEnv)) {
+          writeJson(res, 400, { error: "apiKeyEnv is not allowed" });
+          return;
+        }
 
         const defaultBaseUrl =
           body.backend === "local_llm"
@@ -167,7 +191,7 @@ export function startControlRoomServer(port = 4318): http.Server {
         const apiKey =
           body.backend === "remote_api"
             ? body.apiKey?.trim() ||
-              ((body.apiKeyEnv ? process.env[body.apiKeyEnv] : undefined) ??
+              (resolveAllowedRemoteApiKeyFromEnv(body.apiKeyEnv) ??
                 process.env.OPENFRONT_BOTS_REMOTE_API_KEY)
             : undefined;
 
@@ -230,7 +254,11 @@ export function startControlRoomServer(port = 4318): http.Server {
       await serveFile(res, routeToUiFile(url.pathname));
     } catch (error) {
       if (!res.headersSent) {
-        writeJson(res, 500, { error: errorMessage(error) });
+        writeJson(
+          res,
+          error instanceof HttpError ? error.statusCode : 500,
+          { error: errorMessage(error) },
+        );
       } else {
         try {
           res.end();

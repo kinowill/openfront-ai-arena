@@ -465,8 +465,9 @@ function statusClass(kind) {
 }
 
 function badge(label, kind) {
-  if (kind === "configured") return `<span class="badge badge-configured">${label}</span>`;
-  return `<span class="badge badge-${statusClass(kind)}">${label}</span>`;
+  const safeLabel = escapeHtml(label);
+  if (kind === "configured") return `<span class="badge badge-configured">${safeLabel}</span>`;
+  return `<span class="badge badge-${statusClass(kind)}">${safeLabel}</span>`;
 }
 
 function integrationBadge(status) {
@@ -488,6 +489,20 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function safeUrl(value) {
+  const normalized = String(value ?? "").trim();
+  if (!normalized) return "";
+  try {
+    const parsed = new URL(normalized, window.location.origin);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return parsed.toString();
+    }
+  } catch {
+    return "";
+  }
+  return "";
 }
 
 function providerPresetsFor(slotPreset) {
@@ -765,7 +780,7 @@ function renderLiveMap(liveMap) {
     <span class="legend-item"><span class="legend-color" style="background:#0284c7"></span>${t("water")}</span>
     <span class="legend-item"><span class="legend-color" style="background:#27272a"></span>${t("neutral")}</span>
     ${owners
-      .map((ownerId) => `<span class="legend-item"><span class="legend-color" style="background:${playerColor(ownerId)}"></span>${ownerId}</span>`)
+      .map((ownerId) => `<span class="legend-item"><span class="legend-color" style="background:${playerColor(ownerId)}"></span>${escapeHtml(ownerId)}</span>`)
       .join("")}
   `;
 }
@@ -812,10 +827,10 @@ function renderControlRoom(controlRoom) {
             ${badge(item.configured ? "OK" : "...", item.configured ? "configured" : "waiting")}
           </div>
           <div class="text-xs text-muted font-mono mb-2">
-            <div>URL: ${item.endpoint || "--"}</div>
-            <div>Model: ${item.model || "--"}</div>
+            <div>URL: ${escapeHtml(item.endpoint || "--")}</div>
+            <div>Model: ${escapeHtml(item.model || "--")}</div>
           </div>
-          <p class="text-xs text-muted mb-0">${item.help}</p>
+          <p class="text-xs text-muted mb-0">${escapeHtml(item.help)}</p>
         </div>
       `,
     )
@@ -830,7 +845,7 @@ function renderControlRoom(controlRoom) {
         (player) => `
           <tr>
             <td>
-              <div class="font-semibold">${player.displayName}</div>
+              <div class="font-semibold">${escapeHtml(player.displayName)}</div>
               <div class="text-xs text-muted">${badge(player.alive ? t("alive") : t("dead"), player.alive ? "configured" : "error")}</div>
             </td>
             <td>
@@ -855,12 +870,12 @@ function renderControlRoom(controlRoom) {
         (record) => `
           <div class="feed-item">
             <div class="flex-between mb-1">
-              <span class="font-semibold">${record.playerId}</span>
+              <span class="font-semibold">${escapeHtml(record.playerId)}</span>
               ${badge(record.executedActionId || "wait", record.validationErrors.length ? "error" : "configured")}
             </div>
             <div class="text-xs text-muted mono mb-2">Tick ${record.tick} • ${formatTime(record.createdAt)} • conf: ${formatRatio(record.decision?.confidence || 0)}</div>
-            <p class="text-sm"><strong>Goal:</strong> ${record.decision?.strategicGoal || "wait"}</p>
-            <p class="text-xs text-muted">${record.decision?.tacticalReason || ""}</p>
+            <p class="text-sm"><strong>Goal:</strong> ${escapeHtml(record.decision?.strategicGoal || "wait")}</p>
+            <p class="text-xs text-muted">${escapeHtml(record.decision?.tacticalReason || "")}</p>
           </div>
         `,
       )
@@ -875,12 +890,12 @@ function renderControlRoom(controlRoom) {
         (front) => `
           <div class="feed-item">
             <div class="flex-between mb-1">
-              <strong class="text-sm">${front.label}</strong>
+              <strong class="text-sm">${escapeHtml(front.label)}</strong>
               ${badge(front.status, front.intensity >= 0.65 ? "error" : front.intensity >= 0.35 ? "warning" : "configured")}
             </div>
-            <div class="text-xs mono text-muted mb-2">${front.frontId}</div>
+            <div class="text-xs mono text-muted mb-2">${escapeHtml(front.frontId)}</div>
             <div class="flex-between text-xs">
-              <span>Lead: ${front.leadPlayerId || "--"}</span>
+              <span>Lead: ${escapeHtml(front.leadPlayerId || "--")}</span>
               <span>Intensité: ${formatRatio(front.intensity)}</span>
             </div>
           </div>
@@ -890,7 +905,7 @@ function renderControlRoom(controlRoom) {
   }
 
   el.eventList.innerHTML = controlRoom.state.mapState.liveEvents.length
-    ? controlRoom.state.mapState.liveEvents.map((event) => `<li>${event}</li>`).join("")
+    ? controlRoom.state.mapState.liveEvents.map((event) => `<li>${escapeHtml(event)}</li>`).join("")
     : `<li class="empty-state mb-0" style="padding:1rem; border:none;">${t("no_events")}</li>`;
 
   if (!controlRoom.state.commentatorSummaries.length) {
@@ -905,7 +920,7 @@ function renderControlRoom(controlRoom) {
               <span class="text-xs text-muted mono">${formatTime(item.createdAt)}</span>
             </div>
             <ul class="text-sm text-muted" style="padding-left:1rem; margin:0;">
-              ${item.lines.map((line) => `<li style="margin-bottom:4px;">${line}</li>`).join("")}
+              ${item.lines.map((line) => `<li style="margin-bottom:4px;">${escapeHtml(line)}</li>`).join("")}
             </ul>
           </div>
         `,
@@ -1423,14 +1438,14 @@ function renderSession(session) {
         ${badge(session.runtime.status, session.runtime.status)}
       </div>
       <div class="stats-grid mb-2" style="grid-template-columns: repeat(4, 1fr);">
-        <div><div class="text-xs text-muted">Match</div><div class="mono text-xs">${session.runtime.activeMatchId || "--"}</div></div>
+        <div><div class="text-xs text-muted">Match</div><div class="mono text-xs">${escapeHtml(session.runtime.activeMatchId || "--")}</div></div>
         <div><div class="text-xs text-muted">Tick</div><div class="mono text-xs">${session.runtime.tick || "--"}</div></div>
         <div><div class="text-xs text-muted">Players</div><div class="mono text-xs">${session.runtime.connectedPlayers || "--"}/${session.runtime.requiredPlayers || "--"}</div></div>
         <div><div class="text-xs text-muted">Time</div><div class="mono text-xs">${formatTime(session.runtime.startedAt)}</div></div>
       </div>
-      <p class="text-xs text-muted">${session.runtime.lastSummary || "-"}</p>
-      ${session.runtime.joinUrl ? `<p class="text-xs mt-2"><strong>Join:</strong> <a href="${session.runtime.joinUrl}" target="_blank" class="text-primary" rel="noopener noreferrer">${session.runtime.joinUrl}</a></p>` : ""}
-      ${session.runtime.lastError ? `<p class="text-xs text-error mt-2">${session.runtime.lastError}</p>` : ""}
+      <p class="text-xs text-muted">${escapeHtml(session.runtime.lastSummary || "-")}</p>
+      ${safeUrl(session.runtime.joinUrl) ? `<p class="text-xs mt-2"><strong>Join:</strong> <a href="${escapeHtml(safeUrl(session.runtime.joinUrl))}" target="_blank" class="text-primary" rel="noopener noreferrer">${escapeHtml(session.runtime.joinUrl)}</a></p>` : ""}
+      ${session.runtime.lastError ? `<p class="text-xs text-error mt-2">${escapeHtml(session.runtime.lastError)}</p>` : ""}
     </div>
   `;
 
@@ -1468,15 +1483,15 @@ function renderSession(session) {
         (slot) => `
           <div class="feed-item">
             <div class="flex-between mb-2">
-              <strong class="text-sm">${slot.label}</strong>
+              <strong class="text-sm">${escapeHtml(slot.label)}</strong>
               ${badge(slot.alive ? t("alive") : t("dead"), slot.alive ? "configured" : "error")}
             </div>
             <ul class="text-sm text-muted mb-3" style="padding-left:1rem;">
-              ${slot.strategicSummary.map((line) => `<li>${line}</li>`).join("")}
+              ${slot.strategicSummary.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}
             </ul>
             <div class="text-xs text-muted mb-2 uppercase tracking-wide">${t("available_actions")}</div>
             <div class="action-grid">
-              ${slot.validActions.map((action) => `<button class="btn btn-outline btn-sm" data-player-id="${slot.playerId}" data-action-id="${action.id}" type="button">${action.label}</button>`).join("")}
+              ${slot.validActions.map((action) => `<button class="btn btn-outline btn-sm" data-player-id="${escapeHtml(slot.playerId)}" data-action-id="${escapeHtml(action.id)}" type="button">${escapeHtml(action.label)}</button>`).join("")}
             </div>
           </div>
         `,
@@ -1485,7 +1500,7 @@ function renderSession(session) {
     if (session.operator.lastExecutionSummary) {
       el.operatorPanel.insertAdjacentHTML(
         "beforeend",
-        `<div class="feed-item mt-2"><strong class="text-xs">${t("last_operator_action")}</strong><p class="text-sm">${session.operator.lastExecutionSummary}</p></div>`,
+        `<div class="feed-item mt-2"><strong class="text-xs">${t("last_operator_action")}</strong><p class="text-sm">${escapeHtml(session.operator.lastExecutionSummary)}</p></div>`,
       );
     }
   }
