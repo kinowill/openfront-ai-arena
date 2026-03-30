@@ -1165,6 +1165,23 @@ function resolveSlotSecret(slot) {
   return slotSecret(slot) || null;
 }
 
+async function resolveSlotSecretForAction(slot) {
+  if (!slot || slot.preset !== "remote_api") return null;
+  if (slot.secretMode !== "vault") {
+    return resolveSlotSecret(slot);
+  }
+  if (!slot.secretRef) {
+    return null;
+  }
+  if (!vaultState.unlocked || !vaultState.secrets[slot.secretRef]) {
+    const unlocked = await ensureVaultUnlocked();
+    if (!unlocked) {
+      return null;
+    }
+  }
+  return resolveSlotSecret(slot);
+}
+
 function slotCard(slot, index, config) {
   const disabledClass = slot.enabled ? "" : "is-disabled";
   const isHuman = slot.slotKind === "human_reserved";
@@ -1196,6 +1213,10 @@ function slotCard(slot, index, config) {
     .join("");
   const vaultStatus = vaultState.unlocked ? t("vault_unlocked") : t("vault_locked");
   const visibleSecretValue = slotSecret(slot);
+  const selectedVaultLabel =
+    slot.secretRef && vaultState.store?.entries?.[slot.secretRef]?.label
+      ? vaultState.store.entries[slot.secretRef].label
+      : null;
 
   return `
     <article class="slot-card ${disabledClass}" data-slot-index="${index}">
@@ -1284,6 +1305,7 @@ function slotCard(slot, index, config) {
             <button class="btn btn-ghost btn-sm" data-slot-vault-delete="${index}" type="button" ${slot.secretRef ? "" : "disabled"}>${t("vault_delete_secret")}</button>
           </div>
           <div class="text-xs text-muted mt-1">${vaultStatus}</div>
+          <div class="text-xs text-muted mt-1">${selectedVaultLabel ? `Secret: ${escapeHtml(selectedVaultLabel)}` : t("vault_empty")}</div>
         </div>
         <div class="form-group" style="${showApiKeyEnv ? '' : 'display:none;'}">
           <label>${t("slot_api_env")} <span class="text-xs font-normal text-muted">(${slotFieldHint(slot, "apiKeyEnv")})</span></label>
@@ -1517,26 +1539,24 @@ async function saveSession() {
 
 async function startSession() {
   await saveSession();
-  const unresolvedVaultSlot = draftSessionConfig?.slots?.find(
-    (slot) =>
-      slot.enabled &&
-      slot.preset === "remote_api" &&
-      slot.secretMode === "vault" &&
-      !resolveSlotSecret(slot),
-  );
-  if (unresolvedVaultSlot) {
-    setStatus(`${unresolvedVaultSlot.label}: ${t("vault_secret_required")}`, "offline");
-    return;
+  const slotSecrets = [];
+  for (const slot of draftSessionConfig?.slots || []) {
+    const apiKey = await resolveSlotSecretForAction(slot);
+    if (slot.enabled && slot.preset === "remote_api" && slot.secretMode === "vault" && !apiKey) {
+      setStatus(`${slot.label}: ${t("vault_secret_required")}`, "offline");
+      return;
+    }
+    if (apiKey) {
+      slotSecrets.push({
+        slotId: slot.slotId,
+        apiKey,
+      });
+    }
   }
   const session = await api("/api/session/start", {
     method: "POST",
     body: JSON.stringify({
-      slotSecrets: (draftSessionConfig?.slots || [])
-        .map((slot) => ({
-          slotId: slot.slotId,
-          apiKey: resolveSlotSecret(slot),
-        }))
-        .filter((entry) => entry.apiKey),
+      slotSecrets,
     }),
   });
   latestDashboard.session = session;
@@ -1658,7 +1678,7 @@ async function testSlotConnection(index) {
   const slot = draftSessionConfig?.slots?.[index];
   if (!slot) return;
   if (slot.preset !== "local_llm" && slot.preset !== "remote_api") return;
-  const resolvedApiKey = resolveSlotSecret(slot);
+  const resolvedApiKey = await resolveSlotSecretForAction(slot);
   if (slot.preset === "remote_api" && slot.secretMode === "vault" && !resolvedApiKey) {
     integrationChecks = {
       ...integrationChecks,
@@ -1852,9 +1872,11 @@ function bind() {
       const sourceSlot =
         draftSessionConfig?.slots?.[slotIndex] || latestDashboard?.session?.config?.slots?.[slotIndex];
       const directKeyField = activeSlot.querySelector('[data-field="apiKeyDirect"]');
+      const secretModeField = activeSlot.querySelector('[data-field="secretMode"]');
+      const currentSecretMode = secretModeField?.value || sourceSlot?.secretMode || "direct";
       if (sourceSlot && directKeyField) {
         updateSlotSecret(sourceSlot.slotId, directKeyField.value || "", {
-          persist: sourceSlot.secretMode !== "vault",
+          persist: currentSecretMode !== "vault",
         });
       }
       const baseUrlField = activeSlot.querySelector('[data-field="baseUrl"]');
@@ -1889,8 +1911,14 @@ function bind() {
         const slotIndex = Number(slotCardNode.dataset.slotIndex);
         const sourceSlot =
           draftSessionConfig?.slots?.[slotIndex] || latestDashboard?.session?.config?.slots?.[slotIndex];
-        if (sourceSlot && target.value !== "vault") {
-          updateSlotSecret(sourceSlot.slotId, "", { persist: false });
+        const directKeyField = slotCardNode.querySelector('[data-field="apiKeyDirect"]');
+        if (sourceSlot) {
+          if (target.value !== "vault") {
+            updateSlotSecret(sourceSlot.slotId, "", { persist: false });
+          }
+          if (target.value === "vault" && directKeyField?.value) {
+            updateSlotSecret(sourceSlot.slotId, directKeyField.value, { persist: false });
+          }
         }
       }
       if (target.matches?.('[data-field="secretRef"]')) {
