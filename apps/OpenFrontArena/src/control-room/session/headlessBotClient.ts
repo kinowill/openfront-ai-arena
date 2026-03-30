@@ -76,6 +76,36 @@ export class HeadlessBotClient {
     );
   }
 
+  private async decideWithTimeout(
+    observation: any,
+    tick: number,
+  ): Promise<Awaited<ReturnType<HeadlessBotClientOptions["bot"]["decide"]>>> {
+    const timeoutMs =
+      this.options.bot.identity.backend === "rule_based" ? 2000 : 15000;
+
+    await this.debug("decision_begin", {
+      tick,
+      backend: this.options.bot.identity.backend,
+      timeoutMs,
+    });
+
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error(`bot_decide_timeout_${timeoutMs}ms`)), timeoutMs);
+    });
+
+    const result = (await Promise.race([
+      Promise.resolve(this.options.bot.decide(observation, { tick })),
+      timeoutPromise,
+    ])) as Awaited<ReturnType<HeadlessBotClientOptions["bot"]["decide"]>>;
+
+    await this.debug("decision_done", {
+      tick,
+      backend: this.options.bot.identity.backend,
+    });
+
+    return result;
+  }
+
   async connect(): Promise<void> {
     const WebSocketCtor = (globalThis as any).WebSocket;
     if (!WebSocketCtor) {
@@ -375,9 +405,10 @@ export class HeadlessBotClient {
 
     this.spawnAttempt = 0;
 
-    const runtimeDecision = await this.options.bot.decide(observation, {
-      tick: observation.match.tick,
-    });
+    const runtimeDecision = await this.decideWithTimeout(
+      observation,
+      observation.match.tick,
+    );
     const arbitration = arbitrateDecision(observation, runtimeDecision.decision);
     await this.debug("decision", {
       tick: observation.match.tick,
