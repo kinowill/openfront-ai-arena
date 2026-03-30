@@ -257,120 +257,138 @@ export class ControlRoomSessionManager {
   async start(runtimeSecrets?: {
     slotSecrets?: Array<{ slotId?: string; apiKey?: string | null }>;
   }): Promise<ControlRoomSessionSnapshot> {
-    if (runtimeSecrets?.slotSecrets) {
-      this.slotApiKeys.clear();
-      for (const slotSecret of runtimeSecrets.slotSecrets) {
-        const slotId = slotSecret.slotId?.trim();
-        const apiKey = slotSecret.apiKey?.trim();
-        if (slotId && apiKey) {
-          this.slotApiKeys.set(slotId, apiKey);
+    try {
+      if (runtimeSecrets?.slotSecrets) {
+        this.slotApiKeys.clear();
+        for (const slotSecret of runtimeSecrets.slotSecrets) {
+          const slotId = slotSecret.slotId?.trim();
+          const apiKey = slotSecret.apiKey?.trim();
+          if (slotId && apiKey) {
+            this.slotApiKeys.set(slotId, apiKey);
+          }
         }
       }
-    }
 
-    if (this.runtime.status === "running") {
-      return this.snapshot();
-    }
-
-    if (this.runtime.status === "lobby" && this.runtime.activeMatchId) {
-      await this.refreshLobbyCounts();
-      const requiredPlayers = this.runtime.requiredPlayers ?? 0;
-      const connectedPlayers = this.runtime.connectedPlayers ?? 0;
-      if (connectedPlayers < requiredPlayers) {
-        this.runtime = {
-          ...this.runtime,
-          lastSummary: `Lobby ready. ${connectedPlayers}/${requiredPlayers} players connected. Join the reserved human slot(s), then press start again.`,
-        };
+      if (this.runtime.status === "running") {
         return this.snapshot();
       }
-      await this.launchPreparedLobby();
-      return this.snapshot();
-    }
 
-    await fs.writeFile(LOG_FILE, "", "utf8");
-
-    const enabledSlots = this.config.slots.filter((slot) => slot.enabled);
-    const totalParticipants = enabledSlots.length + this.config.nativeBotCount;
-    if (totalParticipants < 2) {
-      throw new Error("At least two total participants are required.");
-    }
-
-    const humanSlots = enabledSlots.filter((slot) => slot.slotKind === "human_reserved");
-    const botSlots = enabledSlots.filter((slot) => slot.slotKind === "bot");
-    const resolvedMapName = resolveConfiguredMapName(this.config);
-    const lobby = buildLobbyInfo(randomUUID().replace(/-/g, "").slice(0, 8));
-
-    await createPrivateLobby(
-      lobby,
-      buildPrivateLobbyConfig({
-        mapName: resolvedMapName,
-        gameMode: this.config.gameMode,
-        maxPlayers: enabledSlots.length,
-        nativeBotCount: this.config.nativeBotCount,
-        playerTeams: this.config.gameMode === "team" ? this.config.teamCount : undefined,
-        infiniteGold: this.config.infiniteGold,
-        infiniteTroops: this.config.infiniteTroops,
-        instantBuild: this.config.instantBuild,
-      }),
-    );
-
-    this.runtime = {
-      ...defaultRuntime(),
-      status: humanSlots.length > 0 ? "lobby" : "running",
-      activeMatchId: lobby.gameId,
-      startedAt: new Date().toISOString(),
-      tick: 0,
-      surfaceUrl: lobby.surfaceUrl,
-      joinUrl: lobby.joinUrl,
-      requiredPlayers: enabledSlots.length,
-      connectedPlayers: 0,
-      lastSummary:
-        humanSlots.length > 0
-          ? `OpenFront lobby prepared on ${resolvedMapName}. Join the reserved human slot(s), then press start again.`
-          : `OpenFront lobby prepared on ${resolvedMapName}. Launching match.`,
-    };
-
-    this.botClients = [];
-    for (const slot of botSlots) {
-      const bot = this.createBot(slot);
-      if (!bot) {
-        continue;
-      }
-      const client = new HeadlessBotClient({
-        bot,
-        displayName: slot.label,
-        lobby,
-        tickLogger: this.tickLogger,
-        matchRef: {
-          id: lobby.gameId,
-          tick: 0,
-          phase: "spawn",
-          seed: null,
-          maxTicks: this.config.maxTicks,
-          mode: this.config.gameMode,
-          mapName: resolvedMapName,
-        },
-        onSummary: (summary, tick) => {
-          this.currentGame = (client as any).runner?.game ?? this.currentGame;
+      if (this.runtime.status === "lobby" && this.runtime.activeMatchId) {
+        await this.refreshLobbyCounts();
+        const requiredPlayers = this.runtime.requiredPlayers ?? 0;
+        const connectedPlayers = this.runtime.connectedPlayers ?? 0;
+        if (connectedPlayers < requiredPlayers) {
           this.runtime = {
             ...this.runtime,
-            tick: tick ?? this.runtime.tick,
-            lastSummary: summary,
+            lastSummary: `Lobby ready. ${connectedPlayers}/${requiredPlayers} players connected. Join the reserved human slot(s), then press start again.`,
           };
-          this.currentMatchActive = this.runtime.status === "running";
-        },
-      });
-      await client.connect();
-      this.botClients.push(client);
+          return this.snapshot();
+        }
+        await this.launchPreparedLobby();
+        return this.snapshot();
+      }
+
+      await fs.writeFile(LOG_FILE, "", "utf8");
+
+      const enabledSlots = this.config.slots.filter((slot) => slot.enabled);
+      const totalParticipants = enabledSlots.length + this.config.nativeBotCount;
+      if (totalParticipants < 2) {
+        throw new Error("At least two total participants are required.");
+      }
+
+      const humanSlots = enabledSlots.filter((slot) => slot.slotKind === "human_reserved");
+      const botSlots = enabledSlots.filter((slot) => slot.slotKind === "bot");
+      const resolvedMapName = resolveConfiguredMapName(this.config);
+      const lobby = buildLobbyInfo(randomUUID().replace(/-/g, "").slice(0, 8));
+
+      await createPrivateLobby(
+        lobby,
+        buildPrivateLobbyConfig({
+          mapName: resolvedMapName,
+          gameMode: this.config.gameMode,
+          maxPlayers: enabledSlots.length,
+          nativeBotCount: this.config.nativeBotCount,
+          playerTeams: this.config.gameMode === "team" ? this.config.teamCount : undefined,
+          infiniteGold: this.config.infiniteGold,
+          infiniteTroops: this.config.infiniteTroops,
+          instantBuild: this.config.instantBuild,
+        }),
+      );
+
+      this.runtime = {
+        ...defaultRuntime(),
+        status: humanSlots.length > 0 ? "lobby" : "running",
+        activeMatchId: lobby.gameId,
+        startedAt: new Date().toISOString(),
+        tick: 0,
+        surfaceUrl: lobby.surfaceUrl,
+        joinUrl: lobby.joinUrl,
+        requiredPlayers: enabledSlots.length,
+        connectedPlayers: 0,
+        lastSummary:
+          humanSlots.length > 0
+            ? `OpenFront lobby prepared on ${resolvedMapName}. Join the reserved human slot(s), then press start again.`
+            : `OpenFront lobby prepared on ${resolvedMapName}. Launching match.`,
+      };
+
+      this.botClients = [];
+      for (const slot of botSlots) {
+        const bot = this.createBot(slot);
+        if (!bot) {
+          continue;
+        }
+        const client = new HeadlessBotClient({
+          bot,
+          displayName: slot.label,
+          lobby,
+          tickLogger: this.tickLogger,
+          matchRef: {
+            id: lobby.gameId,
+            tick: 0,
+            phase: "spawn",
+            seed: null,
+            maxTicks: this.config.maxTicks,
+            mode: this.config.gameMode,
+            mapName: resolvedMapName,
+          },
+          onSummary: (summary, tick) => {
+            this.currentGame = (client as any).runner?.game ?? this.currentGame;
+            this.runtime = {
+              ...this.runtime,
+              tick: tick ?? this.runtime.tick,
+              lastSummary: summary,
+            };
+            this.currentMatchActive = this.runtime.status === "running";
+          },
+        });
+        await client.connect();
+        this.botClients.push(client);
+      }
+
+      await this.refreshLobbyCounts();
+
+      if (humanSlots.length === 0) {
+        await this.launchPreparedLobby();
+      }
+
+      return this.snapshot();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown start failure";
+      for (const client of this.botClients) {
+        await client.stop();
+      }
+      this.botClients = [];
+      this.currentGame = null;
+      this.currentMatchActive = false;
+      this.runtime = {
+        ...this.runtime,
+        status: "error",
+        stoppedAt: new Date().toISOString(),
+        lastError: message,
+        lastSummary: `Session start failed: ${message}`,
+      };
+      return this.snapshot();
     }
-
-    await this.refreshLobbyCounts();
-
-    if (humanSlots.length === 0) {
-      await this.launchPreparedLobby();
-    }
-
-    return this.snapshot();
   }
 
   executeOperatorAction(_playerId: string, _actionId: string): ControlRoomSessionSnapshot {

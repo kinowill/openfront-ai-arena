@@ -78,7 +78,12 @@ export class HeadlessBotClient {
       });
 
       this.socket.addEventListener("message", (event: MessageEvent<string>) => {
-        void this.onMessage(String(event.data));
+        void this.onMessage(String(event.data)).catch((error) => {
+          this.options.onSummary?.(
+            `${this.options.displayName} runtime error: ${error instanceof Error ? error.message : "unknown error"}`,
+            null,
+          );
+        });
       });
       this.socket.addEventListener("close", () => {
         this.stopPing();
