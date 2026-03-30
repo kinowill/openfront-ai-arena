@@ -310,3 +310,14 @@ index 98e1aa3e..8c4df940 100644
  
    // Middleware to handle /wX path prefix
    app.use((req, res, next) => {
+
+diff --git a/src/server/GameServer.ts b/src/server/GameServer.ts
+index 55fbf3f6..218b1bf8 100644
+--- a/src/server/GameServer.ts
++++ b/src/server/GameServer.ts
+@@ -194,6 +194,7 @@ export class GameServer {
+     if (
++      !this._hasStarted &&
+       this.gameConfig.maxPlayers &&
+       this.activeClients.length >= this.gameConfig.maxPlayers
+     ) {
