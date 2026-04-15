@@ -60,6 +60,7 @@ export class HeadlessBotClient {
   private lastActedTick = -1;
   private lastIntentSentAt = 0;
   private lastDecisionTick = -1;
+  private pendingTurns: Turn[] = [];
 
   constructor(private readonly options: HeadlessBotClientOptions) {}
 
@@ -315,6 +316,23 @@ export class HeadlessBotClient {
       backlog: message.turns.length,
     });
 
+    // Flush turns that arrived while createGameRunner was awaiting.
+    const buffered = this.pendingTurns.sort((a, b) => a.turnNumber - b.turnNumber);
+    this.pendingTurns = [];
+    for (const turn of buffered) {
+      if (turn.turnNumber > this.latestTurn) {
+        this.runner.addTurn(turn);
+        this.runner.executeNextTick();
+        this.latestTurn = turn.turnNumber;
+      }
+    }
+    if (buffered.length > 0) {
+      await this.debug("start_pending_flushed", {
+        count: buffered.length,
+        latestTurn: this.latestTurn,
+      });
+    }
+
     await this.runPlayLoop();
     await this.debug("start_first_play_completed", {
       latestTurn: this.latestTurn,
@@ -322,7 +340,12 @@ export class HeadlessBotClient {
   }
 
   private async onTurn(turn: Turn): Promise<void> {
-    if (!this.runner || turn.turnNumber <= this.latestTurn) {
+    if (!this.runner) {
+      // Runner is still being created — buffer this turn so onStart can apply it.
+      this.pendingTurns.push(turn);
+      return;
+    }
+    if (turn.turnNumber <= this.latestTurn) {
       return;
     }
 
