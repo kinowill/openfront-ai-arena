@@ -99,7 +99,11 @@ export class HeadlessBotClient {
     tick: number,
   ): Promise<Awaited<ReturnType<HeadlessBotClientOptions["bot"]["decide"]>>> {
     const timeoutMs =
-      this.options.bot.identity.backend === "rule_based" ? 2000 : 15000;
+      this.options.bot.identity.backend === "rule_based"
+        ? 2000
+        : this.options.bot.identity.backend === "local_llm"
+          ? 90000
+          : 15000;
 
     await this.debug("decision_begin", {
       tick,

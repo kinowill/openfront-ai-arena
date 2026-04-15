@@ -118,6 +118,7 @@ export class OpenAICompatibleBot implements OpenFrontBot {
           body: JSON.stringify({
             model: this.options.model,
             temperature: 0.2,
+            max_tokens: 300,
             messages: [
               {
                 role: "system",
