@@ -7,6 +7,7 @@ const ALLOWED_REMOTE_API_KEY_ENV_NAMES = new Set([
   "GROQ_API_KEY",
   "TOGETHER_API_KEY",
   "FIREWORKS_API_KEY",
+  "ANTHROPIC_API_KEY",
 ]);
 
 export function isAllowedRemoteApiKeyEnvName(value: string | null | undefined): boolean {
