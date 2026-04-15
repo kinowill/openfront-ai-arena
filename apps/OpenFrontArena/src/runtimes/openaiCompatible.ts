@@ -112,7 +112,9 @@ export class OpenAICompatibleBot implements OpenFrontBot {
           headers: {
             "Content-Type": "application/json",
             ...(this.options.apiKey
-              ? { Authorization: `Bearer ${this.options.apiKey}` }
+              ? this.options.baseUrl.includes("anthropic.com")
+                ? { "x-api-key": this.options.apiKey, "anthropic-version": "2023-06-01" }
+                : { Authorization: `Bearer ${this.options.apiKey}` }
               : {}),
           },
           body: JSON.stringify({
