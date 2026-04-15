@@ -519,20 +519,27 @@ export class HeadlessBotClient {
 
     this.spawnAttempt = 0;
 
-    const runtimeDecision = await this.decideWithTimeout(
-      observation,
-      observation.match.tick,
-    );
-    const latestKnownTick = Math.max(this.latestTurn, game.ticks());
-    if (latestKnownTick > observation.match.tick) {
-      await this.debug("decision_skipped", {
-        tick: observation.match.tick,
-        reason: "stale_observation",
-        latestKnownTick,
-      });
-      this.lastDecisionTick = latestKnownTick;
-      return;
+    let runtimeDecision: Awaited<ReturnType<typeof this.decideWithTimeout>>;
+    try {
+      runtimeDecision = await this.decideWithTimeout(
+        observation,
+        observation.match.tick,
+      );
+    } catch (error) {
+      // Timeout or error: rate-limit the next retry using the current tick.
+      this.lastDecisionTick = game.ticks();
+      throw error;
     }
+
+    const staleTicks = game.ticks() - observation.match.tick;
+    if (staleTicks > 0) {
+      await this.debug("decision_stale", {
+        tick: observation.match.tick,
+        currentTick: game.ticks(),
+        staleTicks,
+      });
+    }
+
     const arbitration = arbitrateDecision(observation, runtimeDecision.decision);
     await this.debug("decision", {
       tick: observation.match.tick,
@@ -553,7 +560,7 @@ export class HeadlessBotClient {
         type: "intent",
         intent,
       });
-      this.lastDecisionTick = observation.match.tick;
+      this.lastDecisionTick = game.ticks();
       if (sent) {
         this.lastActedTick = observation.match.tick;
         await this.debug("intent_sent", {
@@ -562,7 +569,7 @@ export class HeadlessBotClient {
         });
       }
     } else {
-      this.lastDecisionTick = observation.match.tick;
+      this.lastDecisionTick = game.ticks();
       await this.debug("intent_skipped", {
         tick: observation.match.tick,
         selectedActionType: arbitration.executedAction.type,
